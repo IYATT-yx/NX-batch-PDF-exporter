@@ -7,6 +7,9 @@ from tkinter import ttk, filedialog
 import os
 
 programName = 'Siemens NX 批量 PDF 图纸导出工具'
+baseDir = os.path.dirname(os.path.abspath(__file__))
+tclDir = os.path.join(baseDir, 'tcl', 'tcl8.6')
+os.environ["TCL_LIBRARY"] = tclDir
 
 class Application(tk.Frame):
     def __init__(self, root):
