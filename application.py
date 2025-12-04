@@ -12,7 +12,7 @@ tclDir = os.path.join(baseDir, 'tcl', 'tcl8.6')
 os.environ["TCL_LIBRARY"] = tclDir
 
 class Application(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk):
         super().__init__(root)
         self.root = root
         self.pack(fill=tk.BOTH, expand=True)
@@ -25,43 +25,45 @@ class Application(tk.Frame):
 
     def createWidgets(self):
         self.prtListShow = PrtListShow(self)
-        self.prtListShow.grid(row=0, column=0, rowspan=7, sticky=tk.NSEW)
+        self.prtListShow.grid(row=0, column=0, rowspan=8, sticky=tk.NSEW)
 
         tk.Button(self, text='选择文件', command=self.onGetSelectedPrts).grid(row=0, column=1, sticky=tk.NSEW)
         tk.Button(self, text='选择文件夹', command=self.onGetPrtsFromSelectedFolder).grid(row=1, column=1, sticky=tk.NSEW)
-        tk.Button(self, text='显示文件', command=self.onGetOpenedPrts).grid(row=2, column=1, sticky=tk.NSEW)
-        tk.Button(self, text='清空显示', command=self.prtListShow.clear).grid(row=3, column=1, sticky=tk.NSEW)
-        ttk.Separator(self, orient=tk.HORIZONTAL).grid(row=4, column=1, columnspan=2, sticky=tk.EW, pady=5)
+        tk.Button(self, text='所有打开文件', command=self.onGetOpenedPrts).grid(row=2, column=1, sticky=tk.NSEW)
+        tk.Button(self, text='工作部件', command=self.onWorkPrt).grid(row=3, column=1, sticky=tk.NSEW)
+        tk.Button(self, text='清空显示', command=self.prtListShow.clear).grid(row=4, column=1, sticky=tk.NSEW)
+        ttk.Separator(self, orient=tk.HORIZONTAL).grid(row=5, column=1, columnspan=2, sticky=tk.EW, pady=5)
 
-        tk.Button(self, text='设置选中项', command=self.onSetSelectedStatus).grid(row=5, column=1, sticky=tk.NSEW)
-        tk.Button(self, text='设置所有', command=self.onSetAllStatus).grid(row=6, column=1, sticky=tk.NSEW)
+        tk.Button(self, text='设置选中项', command=self.onSetSelectedStatus).grid(row=6, column=1, sticky=tk.NSEW)
+        tk.Button(self, text='设置所有', command=self.onSetAllStatus).grid(row=7, column=1, sticky=tk.NSEW)
         
         self.recursiveValue = tk.BooleanVar(self, value=False)
         tk.Checkbutton(self, text='递归', variable=self.recursiveValue).grid(row=1, column=2, sticky=tk.W)
         self.selectedStatusValue = tk.BooleanVar(self, value=True)
-        tk.Checkbutton(self, text='导出', variable=self.selectedStatusValue).grid(row=5, column=2, sticky=tk.W)
+        tk.Checkbutton(self, text='导出', variable=self.selectedStatusValue).grid(row=6, column=2, sticky=tk.W)
         self.allStatusValue = tk.BooleanVar(self, value=True)
-        tk.Checkbutton(self, text='导出', variable=self.allStatusValue).grid(row=6, column=2, sticky=tk.W)
+        tk.Checkbutton(self, text='导出', variable=self.allStatusValue).grid(row=7, column=2, sticky=tk.W)
 
-        ttk.Separator(self, orient=tk.HORIZONTAL).grid(row=7, column=0, columnspan=3, sticky=tk.EW, pady=5)
+        ttk.Separator(self, orient=tk.HORIZONTAL).grid(row=8, column=0, columnspan=3, sticky=tk.EW, pady=5)
 
         self.exportFolderValue = tk.StringVar(self, value='')
-        tk.Entry(self, textvariable=self.exportFolderValue, bd=3).grid(row=8, column=0, sticky=tk.NSEW)
-        tk.Button(self, text='选择导出文件夹', command=self.onSelectExportFolder).grid(row=8, column=1, sticky=tk.NSEW)
-        tk.Label(self, text='（可选）').grid(row=8, column=2, sticky=tk.W)
+        tk.Entry(self, textvariable=self.exportFolderValue, bd=3).grid(row=9, column=0, sticky=tk.NSEW)
+        tk.Button(self, text='选择导出文件夹', command=self.onSelectExportFolder).grid(row=9, column=1, sticky=tk.NSEW)
+        tk.Label(self, text='（可选）').grid(row=9, column=2, sticky=tk.W)
 
         self.prefixNameValue = tk.StringVar(self, value='')
-        tk.Entry(self, textvariable=self.prefixNameValue,  bd=3).grid(row=9, column=0, sticky=tk.NSEW)
-        tk.Label(self, text='<--- 导出PDF的前缀（可选）').grid(row=9, column=1, columnspan=2, sticky=tk.W)
+        tk.Entry(self, textvariable=self.prefixNameValue,  bd=3).grid(row=10, column=0, sticky=tk.NSEW)
+        tk.Label(self, text='<--- 导出PDF的前缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
 
         self.suffixNameValue = tk.StringVar(self, value='_PDF')
-        tk.Entry(self, textvariable=self.suffixNameValue, bd=3).grid(row=10, column=0, sticky=tk.NSEW)
-        tk.Label(self, text='<--- 导出PDF的后缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
+        tk.Entry(self, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
+        tk.Label(self, text='<--- 导出PDF的后缀（可选）').grid(row=11, column=1, columnspan=2, sticky=tk.W)
 
-        tk.Button(self, text='导出', command=self.onExport, bd=3).grid(row=11, column=0, columnspan=3, sticky=tk.NSEW)
+        self.exportButton = tk.Button(self, text='导出', command=self.onExport, bd=3)
+        self.exportButton.grid(row=12, column=0, columnspan=3, sticky=tk.NSEW)
 
         self.msgText = tk.Text(self, wrap=tk.CHAR, height=10, state=tk.DISABLED)
-        self.msgText.grid(row=12, column=0, columnspan=3, sticky=tk.NSEW)
+        self.msgText.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
 
 
     def onGetSelectedPrts(self):
@@ -83,6 +85,13 @@ class Application(tk.Frame):
         获取已打开的文件
         """
         prtList = NxModules.getOpenedPrts()
+        self.prtListShow.insertPrtList(prtList)
+
+    def onWorkPrt(self):
+        """
+        获取工作部件
+        """
+        prtList = NxModules.getWorkPrt()
         self.prtListShow.insertPrtList(prtList)
 
     def onSetSelectedStatus(self):
@@ -128,12 +137,16 @@ class Application(tk.Frame):
         exportFolder = self.exportFolderValue.get().strip()
         if exportFolder != '':
             os.makedirs(exportFolder, exist_ok=True)
-        NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)        
+        self.exportButton.config(state=tk.DISABLED)
+        NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
+        # NX 2506 中执行时有异常，必须执行 update，否则按钮禁用状态下的点击也会留到本轮执行结束后继续触发
+        self.update()
+        self.exportButton.config(state=tk.NORMAL)
 
 def run():
     root = tk.Tk()
     width = 900
-    height = 490
+    height = 520
     screenwidth = root.winfo_screenwidth()
     screenheight = root.winfo_screenheight()
     root.geometry(f'{width}x{height}+{int((screenwidth - width) / 2)}+{int((screenheight - height) / 2)}')

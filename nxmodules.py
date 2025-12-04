@@ -58,6 +58,37 @@ class NxModules:
         return prts
     
     @staticmethod
+    def printMsg(msg: str):
+        """
+        在列表窗口中打印消息
+        """
+        session = NXOpen.Session.GetSession()
+        lw = session.ListingWindow
+        if not lw.IsOpen():
+            lw.Open()
+        lw.WriteLine(msg)
+    
+    @staticmethod
+    def getWorkPrt() -> list[str]:
+        """
+        获取当前工作部件
+
+        Returns:
+            list[str]: NX 文件路径列表
+        """
+        try:
+            workPrt = NXOpen.Session.GetSession().Parts.Work
+        except NXOpen.NXException as e:
+            NxModules.printMsg(f'获取当前工作部件失败: {e}')
+            return []
+
+        if workPrt is None:
+            NxModules.printMsg('当前没有工作部件')
+            return []
+
+        return [workPrt.FullPath]
+    
+    @staticmethod
     def foreachPrt(func, prtList: list[str], prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
         """
         对每个 NX 文件执行指定函数
@@ -85,6 +116,8 @@ class NxModules:
                 else:
                     writeMsg(f'打开文件 {prtPath} 失败: {e}')
                     continue
+            else:
+                writeMsg(f'成功打开文件 {prtPath}')
             if func(part, prefixName, suffixName, folder, writeMsg):
                 counter += 1
 
@@ -121,6 +154,7 @@ class NxModules:
                 writeMsg(f'❗{part.Name} 没有图纸')
                 return
             pdfbuilder.SourceBuilder.SetSheets(sheets)
+            writeMsg(f'开始导出 {filename}')
             pdfbuilder.Commit()
             pdfbuilder.Destroy()
         except NXOpen.NXException as e:
