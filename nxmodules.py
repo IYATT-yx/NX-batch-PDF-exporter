@@ -111,13 +111,20 @@ class NxModules:
             except NXOpen.NXException as e:
                 if '文件已存在' in str(e):
                     closePart = False
-                    part = session.Parts.Display
+                    for p in session.Parts:
+                        if p is None or not p.FullPath:
+                            continue
+                        if p.FullPath == prtPath:
+                            part = p
+                            session.Parts.SetActiveDisplay(part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
+                            break
                     writeMsg(f'{part.Name} 是已打开的文件')
                 else:
                     writeMsg(f'打开文件 {prtPath} 失败: {e}')
                     continue
             else:
                 writeMsg(f'成功打开文件 {prtPath}')
+
             if func(part, prefixName, suffixName, folder, writeMsg):
                 counter += 1
 
