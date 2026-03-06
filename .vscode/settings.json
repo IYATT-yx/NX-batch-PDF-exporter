@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "C:\\work\\development\\NX-batch-PDF-exporter\\lib\\pypdf-6.7.5" 
+    ]
+}
