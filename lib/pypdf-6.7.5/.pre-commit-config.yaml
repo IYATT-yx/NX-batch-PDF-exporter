@@ -1,0 +1,37 @@
+# pre-commit run --all-files
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: check-ast
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: end-of-file-fixer
+        exclude: "resources/.*|docs/make.bat"
+    -   id: fix-byte-order-marker
+    -   id: trailing-whitespace
+    -   id: mixed-line-ending
+        args: ['--fix=lf']
+        exclude: "docs/make.bat"
+    -   id: check-added-large-files
+        args: ['--maxkb=1000']
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+    -   id: ruff-check
+        args: ['--fix']
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.21.2
+    hooks:
+    -   id: pyupgrade
+        args: [--py39-plus]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+      - id: mypy
+        files: ^pypdf/.*
