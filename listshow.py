@@ -6,19 +6,22 @@ from tkinter import ttk
 
 import os
 
-class PrtListShow(tk.Frame):
-    def __init__(self, master, defaultStatus = '是'):
+class ListShow(tk.Frame):
+    def __init__(self, master, heading1: str = '序号', heading2: str = '导出', heading3: str = 'NX 图纸', defaultStatus = '是'):
         super().__init__(master)
         self.master = master
         self.number = 1
+        self.heading1 = heading1
+        self.heading2 = heading2
+        self.heading3 = heading3
         self.defaultStatus = defaultStatus
         self.createWidgets()
 
     def createWidgets(self):
         self.tree = ttk.Treeview(self, columns=('number', 'status', 'filePath'), show='headings')
-        self.tree.heading('number', text='序号')
-        self.tree.heading('status', text='导出')
-        self.tree.heading('filePath', text='图纸')
+        self.tree.heading('number', text=self.heading1)
+        self.tree.heading('status', text=self.heading2)
+        self.tree.heading('filePath', text=self.heading3)
         self.tree.column('number', anchor=tk.CENTER, width=50, stretch=False)
         self.tree.column('status', anchor=tk.CENTER, width=50, stretch=False)
         self.tree.column('filePath', anchor=tk.W, width=200, stretch=True)
