@@ -87,7 +87,7 @@ class Application(tk.Frame):
         tk.Entry(parent, textvariable=self.prefixNameValue,  bd=3).grid(row=10, column=0, sticky=tk.NSEW)
         tk.Label(parent, text='<--- 导出文件名前缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
 
-        self.suffixNameValue = tk.StringVar(parent, value='_PDF')
+        self.suffixNameValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
         tk.Label(parent, text='<--- 导出文件名后缀（可选）').grid(row=11, column=1, columnspan=2, sticky=tk.W)
 

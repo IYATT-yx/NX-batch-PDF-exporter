@@ -127,6 +127,7 @@ class NxModules:
 
             if func(part, prefixName, suffixName, folder, writeMsg):
                 counter += 1
+                writeMsg(f'-> 正在导出图纸文件，已导出 {counter} 个文件 <-')
 
             if closePart:
                 part.Close(NXOpen.BasePart.CloseWholeTree.TrueValue, NXOpen.BasePart.CloseModified.CloseModified, None)
