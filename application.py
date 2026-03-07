@@ -6,6 +6,7 @@ from pdfmodules import PdfModules
 import tkinter as tk
 from tkinter import ttk, filedialog
 import os
+from enum import Enum, auto
 
 programName = 'Siemens NX 批量 PDF 图纸导出工具'
 baseDir = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +14,10 @@ tclDir = os.path.join(baseDir, 'tcl', 'tcl8.6')
 os.environ["TCL_LIBRARY"] = tclDir
 
 class Application(tk.Frame):
+    class DrawingClass(Enum):
+        PDF = auto()
+        DWG = auto()
+
     def __init__(self, root: tk.Tk):
         super().__init__(root)
         self.root = root
@@ -33,7 +38,7 @@ class Application(tk.Frame):
 
         self.exportPdfTab = ttk.Frame(self.notebook)
         self.createExportPdfTab(self.exportPdfTab)
-        self.notebook.add(self.exportPdfTab, text='导出PDF')
+        self.notebook.add(self.exportPdfTab, text='导出图纸')
 
         self.mergePdfTab = ttk.Frame(self.notebook)
         self.createMergePdfTab(self.mergePdfTab)
@@ -80,17 +85,22 @@ class Application(tk.Frame):
 
         self.prefixNameValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.prefixNameValue,  bd=3).grid(row=10, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text='<--- 导出PDF的前缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
+        tk.Label(parent, text='<--- 导出文件名前缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
 
         self.suffixNameValue = tk.StringVar(parent, value='_PDF')
         tk.Entry(parent, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text='<--- 导出PDF的后缀（可选）').grid(row=11, column=1, columnspan=2, sticky=tk.W)
+        tk.Label(parent, text='<--- 导出文件名后缀（可选）').grid(row=11, column=1, columnspan=2, sticky=tk.W)
+
+        self.drawingClassValue = tk.IntVar(parent, self.DrawingClass.PDF.value)
+        tk.Label(parent, text='导出格式：').grid(row=12, column=0, sticky=tk.E)
+        tk.Radiobutton(parent, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value).grid(row=12, column=1, sticky=tk.W)
+        tk.Radiobutton(parent, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value).grid(row=12, column=2, sticky=tk.W)
 
         self.exportButton = tk.Button(parent, text='导出', command=self.onExport, bd=3)
-        self.exportButton.grid(row=12, column=0, columnspan=3, sticky=tk.NSEW)
+        self.exportButton.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
 
         self.prtMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
-        self.prtMsgText.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
+        self.prtMsgText.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
         self.msgText = self.prtMsgText
 
     def createMergePdfTab(self, parent: tk.Frame):
@@ -157,7 +167,6 @@ class Application(tk.Frame):
                 self.msgText = self.prtMsgText
             case self.mergePdfTab:
                 self.msgText = self.pdfMsgText
-
     
     def onOpenPdfs(self):
         """
@@ -268,7 +277,11 @@ class Application(tk.Frame):
         if exportFolder != '':
             os.makedirs(exportFolder, exist_ok=True)
         self.exportButton.config(state=tk.DISABLED)
-        NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
+        match self.drawingClassValue.get():
+            case self.DrawingClass.PDF.value:
+                NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
+            case self.DrawingClass.DWG.value:
+                NxModules.foreachPrt(NxModules.exportDwg, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
         # NX 2506 中执行时有异常，必须执行 update，否则按钮禁用状态下的点击也会留到本轮执行结束后继续触发
         self.update()
         self.exportButton.config(state=tk.NORMAL)
@@ -276,7 +289,7 @@ class Application(tk.Frame):
 def run():
     root = tk.Tk()
     width = 900
-    height = 520
+    height = 600
     screenwidth = root.winfo_screenwidth()
     screenheight = root.winfo_screenheight()
     root.geometry(f'{width}x{height}+{int((screenwidth - width) / 2)}+{int((screenheight - height) / 2)}')

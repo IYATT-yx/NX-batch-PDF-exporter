@@ -171,4 +171,73 @@ class NxModules:
             writeMsg(f'✓ 导出 PDF 成功: {filename}，共 {len(sheets)} 张图纸')
             return True
             
+    def exportDwg(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
+        """
+        导出 AutoCAD DWG 图纸
+
+        Args:
+            part (NXOpen.Part): NX 部件
+            prefixName (str): 文件名前缀
+            suffixName (str): 文件名后缀
+            folder (str): 文件保存路径
+            writeMsg (function): 用于输出消息的函数
+        
+        Returns:
+            bool: 导出是否成功
+        """
+        dxfdwgCreator = None
+        try:
+            theSession = NXOpen.Session.GetSession()
             
+            # 1. 获取图纸页列表
+            sheets = [sheet for sheet in part.DrawingSheets]
+            if not sheets:
+                writeMsg(f'❗ {part.Leaf} 没有图纸，跳过导出。')
+                return False
+
+            # 2. 初始化 DxfdwgCreator
+            dxfdwgCreator = theSession.DexManager.CreateDxfdwgCreator()
+            
+            # 3. 设置路径
+            if not folder:
+                folder = os.path.dirname(part.FullPath)
+            
+            # 使用 part.Leaf 获取不带路径和后缀的文件名
+            filename = os.path.join(folder, f"{prefixName}{part.Leaf}{suffixName}.dwg")
+            
+            # 4. 配置导出参数
+            dxfdwgCreator.InputFile = part.FullPath
+            dxfdwgCreator.OutputFile = filename
+            dxfdwgCreator.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing # 导出图纸
+            dxfdwgCreator.AutoCADRevision = NXOpen.DxfdwgCreator.AutoCADRevisionOptions.R2004 # 默认R2004
+            dxfdwgCreator.OutputFileType = NXOpen.DxfdwgCreator.OutputFileTypeOption.Dwg      # 导出DWG
+            
+            # 5. 指定要导出的图纸页名称 (格式需为 "SheetName1, SheetName2")
+            sheet_names = ",".join([f'"{s.Name}"' for s in sheets])
+            dxfdwgCreator.DrawingList = sheet_names
+
+            # 6. 其他常用细节设置
+            dxfdwgCreator.ObjectTypes.Curves = True
+            dxfdwgCreator.ObjectTypes.Annotations = True
+            dxfdwgCreator.ObjectTypes.Structures = True
+            dxfdwgCreator.WidthFactorMode = NXOpen.DxfdwgCreator.WidthfactorMethodOptions.AutomaticCalculation
+            
+            # 如果有特定的 .def 配置文件，可以取消下面注释
+            # dxfdwgCreator.SettingsFile = "C:\\Program Files\\Siemens\\NX2506\\dxfdwg\\dxfdwg.def"
+
+            writeMsg(f'开始导出 DWG: {filename}')
+            
+            # 7. 执行提交
+            dxfdwgCreator.Commit()
+            
+            return True
+
+        except NXOpen.NXException as e:
+            writeMsg(f'❌ 导出部件 {part.Leaf} 失败: {str(e)}')
+            return False
+        except Exception as e:
+            writeMsg(f'❌ 系统错误: {str(e)}')
+            return False
+        finally:
+            if dxfdwgCreator:
+                dxfdwgCreator.Destroy()
