@@ -4,6 +4,7 @@ import NXOpen
 
 from typing import Callable
 import os
+from datetime import datetime
 
 class NxModules:
     @staticmethod
@@ -104,6 +105,8 @@ class NxModules:
         session = NXOpen.Session.GetSession()
         part: NXOpen.Part = None
         counter = 0
+        timestamp = datetime.now().strftime("_%Y%m%d_%H%M%S")
+        suffixName += timestamp
         for prtPath in prtList:
             closePart: bool = True
             try:
@@ -165,13 +168,15 @@ class NxModules:
             writeMsg(f'开始导出 {filename}')
             pdfbuilder.Commit()
             pdfbuilder.Destroy()
+
+            writeMsg(f'✓ 导出 PDF 成功: {filename}，共 {len(sheets)} 张图纸')
+            return True
         except NXOpen.NXException as e:
             writeMsg(f'❌ 导出部件 {part.FullPath} 失败: {e}')
             return False
-        else:
-            writeMsg(f'✓ 导出 PDF 成功: {filename}，共 {len(sheets)} 张图纸')
-            return True
+
             
+    @staticmethod
     def exportDwg(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
         """
         导出 AutoCAD DWG 图纸
@@ -230,8 +235,9 @@ class NxModules:
             
             # 7. 执行提交
             dxfdwgCreator.Commit()
-            
-            return True
+            dxfdwgCreator.Destroy()
+
+            return True 
 
         except NXOpen.NXException as e:
             writeMsg(f'❌ 导出部件 {part.Leaf} 失败: {str(e)}')
@@ -239,6 +245,17 @@ class NxModules:
         except Exception as e:
             writeMsg(f'❌ 系统错误: {str(e)}')
             return False
-        finally:
-            if dxfdwgCreator:
-                dxfdwgCreator.Destroy()
+
+    @staticmethod
+    def setFileReadOnly(filePath: str, readonly: bool = True):
+        """
+        设置文件只读属性
+
+        Args:
+            filePath(str): 文件路径
+            readonly(bool): True 设置只读，False 取消只读
+        """
+        if readonly:
+            os.chmod(filePath, 0o444)
+        else:
+            os.chmod(filePath, 0o777)
