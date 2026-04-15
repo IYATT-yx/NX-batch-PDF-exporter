@@ -21,13 +21,38 @@ class PdfModules:
             outputFilename (str): 输出文件名
             inputFiles (list[str]): 输入文件列表
         """
-        number = len(inputFiles)
+        total = len(inputFiles)
         writer = PdfWriter()
-        for idx, pdf in enumerate(inputFiles):
-            writer.append(pdf)
-            writeMsg(f"正在合并 PDF 文件，已合并 {idx + 1} / {number} 个文件")
-        with open(outputFilename, "wb") as outputFileObj:
-            writer.write(outputFileObj)
-        writer.close()
-        writeMsg(f"PDF 文件合并完成，共合并 {number} 个文件")
-        writeMsg(f"合并后的 PDF 文件保存在 {outputFilename}")
+        
+        writeMsg("=" * 50)
+        writeMsg(f"📚 开始合并任务 | 共计: {total} 个 PDF 文件")
+        writeMsg("=" * 50)
+
+        try:
+            for idx, pdf in enumerate(inputFiles, 1):
+                # 只获取文件名用于简洁显示
+                short_name = os.path.basename(pdf)
+                
+                # 合并操作
+                writer.append(pdf)
+                
+                # 打印进度条风格的消息
+                writeMsg(f"[{idx}/{total}] 正在压入: {short_name}")
+
+            # 写入文件
+            writeMsg(f"\n[➔] 正在生成合并后的文件...")
+            with open(outputFilename, "wb") as outputFileObj:
+                writer.write(outputFileObj)
+            writer.close()
+
+            writeMsg("\n" + "=" * 50)
+            writeMsg(f"✨ 合并成功！")
+            writeMsg(f"   ✓ 最终文件: {os.path.basename(outputFilename)}")
+            writeMsg(f"   📍 完整路径: {outputFilename}")
+            writeMsg("=" * 50)
+
+        except Exception as e:
+            writeMsg("\n" + "=" * 50)
+            writeMsg(f"❌ 合并过程中发生错误:")
+            writeMsg(f"   {str(e)}")
+            writeMsg("=" * 50)
