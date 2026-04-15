@@ -59,17 +59,6 @@ class NxModules:
         return prts
     
     @staticmethod
-    def printMsg(msg: str):
-        """
-        在列表窗口中打印消息
-        """
-        session = NXOpen.Session.GetSession()
-        lw = session.ListingWindow
-        if not lw.IsOpen():
-            lw.Open()
-        lw.WriteLine(msg)
-    
-    @staticmethod
     def getWorkPrt() -> list[str]:
         """
         获取当前工作部件
@@ -103,41 +92,46 @@ class NxModules:
             writeMsg (function): 用于输出消息的函数
         """
         session = NXOpen.Session.GetSession()
-        part: NXOpen.Part = None
+        total = len(prtList)
         counter = 0
         timestamp = datetime.now().strftime("_%Y%m%d_%H%M%S")
-        suffixName += timestamp
-        for prtPath in prtList:
-            closePart: bool = True
+        
+        writeMsg("=" * 50)
+        writeMsg(f"🚀 开始批量任务 | 共计: {total} 个文件")
+        writeMsg("=" * 50)
+
+        for index, prtPath in enumerate(prtList, 1):
+            short_name = os.path.basename(prtPath)
+            writeMsg(f"\n[{index}/{total}] 正在处理: {short_name}")
+            
+            closePart = True
             try:
                 part, status = session.Parts.OpenActiveDisplay(prtPath, NXOpen.DisplayPartOption.AllowAdditional)
             except NXOpen.NXException as e:
                 if '文件已存在' in str(e):
                     closePart = False
                     for p in session.Parts:
-                        if p is None or not p.FullPath:
-                            continue
-                        if p.FullPath == prtPath:
+                        if p and p.FullPath == prtPath:
                             part = p
                             session.Parts.SetActiveDisplay(part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
                             break
-                    writeMsg(f'{part.Name} 是已打开的文件')
+                    writeMsg(f"  [!] 提示: {short_name} 已经在内存中，无需重复打开")
                 else:
-                    writeMsg(f'打开文件 {prtPath} 失败: {e}')
+                    writeMsg(f"  [✘] 错误: 无法打开文件 - {e}")
                     continue
-            else:
-                writeMsg(f'成功打开文件 {prtPath}')
 
-            if func(part, prefixName, suffixName, folder, writeMsg):
+            # 执行导出函数
+            if func(part, prefixName, suffixName + timestamp, folder, writeMsg):
                 counter += 1
-                writeMsg(f'-> 正在导出图纸文件，已导出 {counter} 个文件 <-')
 
             if closePart:
                 part.Close(NXOpen.BasePart.CloseWholeTree.TrueValue, NXOpen.BasePart.CloseModified.CloseModified, None)
                 status.Dispose()
-                writeMsg(f'⭙ 关闭文件 {prtPath}')
+                writeMsg(f"  [➔] 资源释放: {short_name} 已关闭")
 
-        writeMsg(f'✅ 共导出 {counter} 个文件')
+        writeMsg("\n" + "=" * 50)
+        writeMsg(f"✨ 任务完成！成功导出: {counter} / {total}")
+        writeMsg("=" * 50)
 
     @staticmethod
     def exportPdf(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
@@ -156,25 +150,30 @@ class NxModules:
         """
         try:
             pdfbuilder = part.PlotManager.CreatePrintPdfbuilder()
-            if folder == '':
-                folder = os.path.dirname(part.FullPath)
-            filename = os.path.join(folder, prefixName + part.Name + suffixName + '.pdf')
-            pdfbuilder.Filename = filename
+            target_folder = folder if folder else os.path.dirname(part.FullPath)
+            filename = os.path.join(target_folder, f"{prefixName}{part.Leaf}{suffixName}.pdf")
+            
             sheets = [sheet for sheet in part.DrawingSheets]
-            if len(sheets) == 0:
-                writeMsg(f'❗{part.Name} 没有图纸')
-                return
+            if not sheets:
+                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页")
+                return False
+            
+            # 遍历图纸，确保成功打开
+            for sheet in sheets:
+                sheet.Open()
+            
+            pdfbuilder.Filename = filename
             pdfbuilder.SourceBuilder.SetSheets(sheets)
-            writeMsg(f'开始导出 {filename}')
+            
             pdfbuilder.Commit()
             pdfbuilder.Destroy()
 
-            writeMsg(f'✓ 导出 PDF 成功: {filename}，共 {len(sheets)} 张图纸')
+            writeMsg(f"  [✓] PDF 导出成功")
+            writeMsg(f"      📍 路径: {filename}")
             return True
-        except NXOpen.NXException as e:
-            writeMsg(f'❌ 导出部件 {part.FullPath} 失败: {e}')
+        except Exception as e:
+            writeMsg(f"  [✘] PDF 导出异常: {str(e)}")
             return False
-
             
     @staticmethod
     def exportDwg(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
@@ -191,59 +190,36 @@ class NxModules:
         Returns:
             bool: 导出是否成功
         """
-        dxfdwgCreator = None
         try:
             theSession = NXOpen.Session.GetSession()
+            sheets = list(part.DrawingSheets)
             
-            # 1. 获取图纸页列表
-            sheets = [sheet for sheet in part.DrawingSheets]
             if not sheets:
-                writeMsg(f'❗ {part.Leaf} 没有图纸，跳过导出。')
+                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页")
                 return False
 
-            # 2. 初始化 DxfdwgCreator
             dxfdwgCreator = theSession.DexManager.CreateDxfdwgCreator()
             
-            # 3. 设置路径
-            if not folder:
-                folder = os.path.dirname(part.FullPath)
+            target_folder = folder if folder else os.path.dirname(part.FullPath)
+            filename = os.path.join(target_folder, f"{prefixName}{part.Leaf}{suffixName}.dwg")
             
-            # 使用 part.Leaf 获取不带路径和后缀的文件名
-            filename = os.path.join(folder, f"{prefixName}{part.Leaf}{suffixName}.dwg")
-            
-            # 4. 配置导出参数
+            # 配置
             dxfdwgCreator.InputFile = part.FullPath
             dxfdwgCreator.OutputFile = filename
-            dxfdwgCreator.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing # 导出图纸
-            dxfdwgCreator.AutoCADRevision = NXOpen.DxfdwgCreator.AutoCADRevisionOptions.R2004 # 默认R2004
-            dxfdwgCreator.OutputFileType = NXOpen.DxfdwgCreator.OutputFileTypeOption.Dwg      # 导出DWG
-            
-            # 5. 指定要导出的图纸页名称 (格式需为 "SheetName1, SheetName2")
-            sheet_names = ",".join([f'"{s.Name}"' for s in sheets])
-            dxfdwgCreator.DrawingList = sheet_names
+            dxfdwgCreator.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing
+            dxfdwgCreator.AutoCADRevision = NXOpen.DxfdwgCreator.AutoCADRevisionOptions.R2004
+            dxfdwgCreator.OutputFileType = NXOpen.DxfdwgCreator.OutputFileTypeOption.Dwg
+            dxfdwgCreator.DrawingList = ",".join([f'"{s.Name}"' for s in sheets])
 
-            # 6. 其他常用细节设置
-            dxfdwgCreator.ObjectTypes.Curves = True
-            dxfdwgCreator.ObjectTypes.Annotations = True
-            dxfdwgCreator.ObjectTypes.Structures = True
-            dxfdwgCreator.WidthFactorMode = NXOpen.DxfdwgCreator.WidthfactorMethodOptions.AutomaticCalculation
-            
-            # 如果有特定的 .def 配置文件，可以取消下面注释
-            # dxfdwgCreator.SettingsFile = "C:\\Program Files\\Siemens\\NX2506\\dxfdwg\\dxfdwg.def"
-
-            writeMsg(f'开始导出 DWG: {filename}')
-            
-            # 7. 执行提交
             dxfdwgCreator.Commit()
             dxfdwgCreator.Destroy()
 
+            writeMsg(f"  [✓] DWG 导出成功 ({len(sheets)} 张图纸)")
+            writeMsg(f"      📍 路径: {filename}")
             return True 
 
-        except NXOpen.NXException as e:
-            writeMsg(f'❌ 导出部件 {part.Leaf} 失败: {str(e)}')
-            return False
         except Exception as e:
-            writeMsg(f'❌ 系统错误: {str(e)}')
+            writeMsg(f"  [✘] DWG 导出异常: {str(e)}")
             return False
 
     @staticmethod
