@@ -46,13 +46,13 @@ class PdfModules:
             writer.close()
 
             writeMsg("\n" + "=" * 50)
-            writeMsg(f"✨ 合并成功！")
-            writeMsg(f"   ✓ 最终文件: {os.path.basename(outputFilename)}")
+            writeMsg(f"✨ 合并成功！", 'success') # 成功级别
+            writeMsg(f"   ✓ 最终文件: {os.path.basename(outputFilename)}", 'success')
             writeMsg(f"   📍 完整路径: {outputFilename}")
             writeMsg("=" * 50)
 
         except Exception as e:
             writeMsg("\n" + "=" * 50)
-            writeMsg(f"❌ 合并过程中发生错误:")
-            writeMsg(f"   {str(e)}")
+            writeMsg(f"❌ 合并过程中发生错误:", 'error') # 错误级别
+            writeMsg(f"   {str(e)}", 'error')
             writeMsg("=" * 50)

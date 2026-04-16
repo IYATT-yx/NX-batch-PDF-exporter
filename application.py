@@ -101,6 +101,7 @@ class Application(tk.Frame):
 
         self.prtMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
         self.prtMsgText.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
+        self._config_text_tags(self.prtMsgText)
         self.msgText = self.prtMsgText
 
     def createMergePdfTab(self, parent: tk.Frame):
@@ -136,6 +137,14 @@ class Application(tk.Frame):
 
         self.pdfMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
         self.pdfMsgText.grid(row=6, column=0, columnspan=3, sticky=tk.NSEW)
+        self._config_text_tags(self.pdfMsgText)
+
+    def _config_text_tags(self, text_widget: tk.Text):
+        """配置 Text 组件的颜色标签"""
+        text_widget.tag_config('info', foreground='black')      # 普通消息
+        text_widget.tag_config('success', foreground='green')   # 成功消息
+        text_widget.tag_config('warn', foreground='orange')     # 警告消息
+        text_widget.tag_config('error', foreground='red')       # 错误消息
 
     def onMergePdf(self):
         pdfList = self.pdfListShow.getPrtList()
@@ -255,15 +264,20 @@ class Application(tk.Frame):
         folder = os.path.normpath(folder)
         self.exportFolderValue.set(folder)
 
-    def writeMsg(self, msg: str):
+    def writeMsg(self, msg: str, level: str = 'info'):
         """
         写消息
 
         Args:
-            msg (str): 消息
+            msg (str): 消息内容
+            level (str): 消息级别 ('info', 'success', 'warn', 'error')
         """
+        if self.msgText is None:
+            return
+            
         self.msgText.config(state=tk.NORMAL)
-        self.msgText.insert(tk.END, msg + '\n')
+        # 在 insert 时传入对应的 tag 名字
+        self.msgText.insert(tk.END, msg + '\n', level) 
         self.msgText.config(state=tk.DISABLED)
         self.msgText.see(tk.END)
         self.msgText.update_idletasks()

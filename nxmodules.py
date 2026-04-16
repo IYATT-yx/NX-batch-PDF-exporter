@@ -97,7 +97,7 @@ class NxModules:
         timestamp = datetime.now().strftime("_%Y%m%d_%H%M%S")
         
         writeMsg("=" * 50)
-        writeMsg(f"🚀 开始批量任务 | 共计: {total} 个文件")
+        writeMsg(f"🚀 开始批量任务 | 共计: {total} 个文件") # 默认 info
         writeMsg("=" * 50)
 
         for index, prtPath in enumerate(prtList, 1):
@@ -115,9 +115,9 @@ class NxModules:
                             part = p
                             session.Parts.SetActiveDisplay(part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
                             break
-                    writeMsg(f"  [!] 提示: {short_name} 已经在内存中，无需重复打开")
+                    writeMsg(f"  [!] 提示: {short_name} 已经在内存中", 'warn') # 警告色
                 else:
-                    writeMsg(f"  [✘] 错误: 无法打开文件 - {e}")
+                    writeMsg(f"  [✘] 错误: 无法打开文件 - {e}", 'error') # 错误色
                     continue
 
             # 执行导出函数
@@ -125,12 +125,16 @@ class NxModules:
                 counter += 1
 
             if closePart:
-                part.Close(NXOpen.BasePart.CloseWholeTree.TrueValue, NXOpen.BasePart.CloseModified.CloseModified, None)
+                part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.CloseModified, None)
                 status.Dispose()
                 writeMsg(f"  [➔] 资源释放: {short_name} 已关闭")
 
         writeMsg("\n" + "=" * 50)
-        writeMsg(f"✨ 任务完成！成功导出: {counter} / {total}")
+        # 根据完成情况输出不同颜色
+        if counter == total:
+            writeMsg(f"✨ 任务完成！成功导出: {counter} / {total}", 'success')
+        else:
+            writeMsg(f"✨ 任务完成！成功导出: {counter} / {total}", 'warn')
         writeMsg("=" * 50)
 
     @staticmethod
@@ -155,10 +159,9 @@ class NxModules:
             
             sheets = [sheet for sheet in part.DrawingSheets]
             if not sheets:
-                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页")
+                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页", 'warn') # 警告色
                 return False
             
-            # 遍历图纸，确保成功打开
             for sheet in sheets:
                 sheet.Open()
             
@@ -168,11 +171,11 @@ class NxModules:
             pdfbuilder.Commit()
             pdfbuilder.Destroy()
 
-            writeMsg(f"  [✓] PDF 导出成功")
+            writeMsg(f"  [✓] PDF 导出成功", 'success') # 成功色
             writeMsg(f"      📍 路径: {filename}")
             return True
         except Exception as e:
-            writeMsg(f"  [✘] PDF 导出异常: {str(e)}")
+            writeMsg(f"  [✘] PDF 导出异常: {str(e)}", 'error') # 错误色
             return False
             
     @staticmethod
@@ -195,7 +198,7 @@ class NxModules:
             sheets = list(part.DrawingSheets)
             
             if not sheets:
-                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页")
+                writeMsg(f"  [!] 跳过: 该部件未发现任何图纸页", 'warn') # 警告色
                 return False
 
             dxfdwgCreator = theSession.DexManager.CreateDxfdwgCreator()
@@ -203,7 +206,6 @@ class NxModules:
             target_folder = folder if folder else os.path.dirname(part.FullPath)
             filename = os.path.join(target_folder, f"{prefixName}{part.Leaf}{suffixName}.dwg")
             
-            # 配置
             dxfdwgCreator.InputFile = part.FullPath
             dxfdwgCreator.OutputFile = filename
             dxfdwgCreator.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing
@@ -214,12 +216,12 @@ class NxModules:
             dxfdwgCreator.Commit()
             dxfdwgCreator.Destroy()
 
-            writeMsg(f"  [✓] DWG 导出成功 ({len(sheets)} 张图纸)")
+            writeMsg(f"  [✓] DWG 导出成功 ({len(sheets)} 张图纸)", 'success') # 成功色
             writeMsg(f"      📍 路径: {filename}")
             return True 
 
         except Exception as e:
-            writeMsg(f"  [✘] DWG 导出异常: {str(e)}")
+            writeMsg(f"  [✘] DWG 导出异常: {str(e)}", 'error') # 错误色
             return False
 
     @staticmethod
