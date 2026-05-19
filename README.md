@@ -49,6 +49,36 @@
 现在可以通过直接点击图标运行了  
 ![alt text](doc/image7.png)
 
+## 国际化
+
+【1】词条提取:  
+```bash
+python .\locales\i18n\pygettext.py -d messages -o .\locales\messages.pot .
+```
+
+【2】翻译词条：  
+生成的词条位于 `.\locales\messages.pot` 文件中。  
+如果计划翻译美式英语，则创建文件夹 `.\locales\en_US\LC_MESSAGES`  
+```bash
+mkdir .\locales\en_US\LC_MESSAGES
+```
+将 `.\locales\messages.pot` 复制并改名到 `.\locales\en_US\LC_MESSAGES\messages.po`  
+```bash
+copy .\locales\messages.pot .\locales\en_US\LC_MESSAGES\messages.po
+```
+
+可以对`.\locales\en_US\LC_MESSAGES\messages.po`进行翻译，`msgid`是词条，`msgstr`是翻译后的内容。  
+
+【3】编译词条：  
+```
+python .\locales\i18n\msgfmt.py -o locales\en_US\LC_MESSAGES\messages.mo locales\en_US\LC_MESSAGES\messages.po
+```
+
+【4】说明：  
+本工具会自动获取系统的语言，并匹配对应语言文件夹下的 mo 文件用于工具实际的语言显示，没有匹配语言的 mo 文件时则显示中文。语言文件夹命名如：美式英语 en_US，日语 ja_JP，德语 de_DE 等。    
+
+
+
 ## 版权与许可
 
 本项目采用 [MIT License](LICENSE) 开源。  

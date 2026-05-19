@@ -8,7 +8,7 @@ from tkinter import ttk, filedialog
 import os
 from enum import Enum, auto
 
-programName = 'Siemens NX 批量 PDF 图纸导出工具'
+programName = _('Siemens NX 批量 PDF 图纸导出工具')
 baseDir = os.path.dirname(os.path.abspath(__file__))
 tclDir = os.path.join(baseDir, 'tcl', 'tcl8.6')
 os.environ["TCL_LIBRARY"] = tclDir
@@ -26,8 +26,8 @@ class Application(tk.Frame):
         self.msgText = None
 
         self.createWidgets()
-        self.writeMsg(f'{programName} {version.V}\nIYATT-yx iyatt@iyatt.com\n本工具为开源项目，发布地址：https://github.com/IYATT-yx/NX-batch-PDF-exporter')
-
+        msg: str = _('{programName} {version}\nIYATT-yx iyatt@iyatt.com\n本工具为开源项目，发布地址：https://github.com/IYATT-yx/NX-batch-PDF-exporter')
+        self.writeMsg(msg.format(programName=programName, version=version.V))
 
     def createWidgets(self):
         """
@@ -38,11 +38,11 @@ class Application(tk.Frame):
 
         self.exportPdfTab = ttk.Frame(self.notebook)
         self.createExportPdfTab(self.exportPdfTab)
-        self.notebook.add(self.exportPdfTab, text='导出图纸')
+        self.notebook.add(self.exportPdfTab, text=_('导出图纸'))
 
         self.mergePdfTab = ttk.Frame(self.notebook)
         self.createMergePdfTab(self.mergePdfTab)
-        self.notebook.add(self.mergePdfTab, text='合并PDF')
+        self.notebook.add(self.mergePdfTab, text=_('合并PDF'))
 
         self.notebook.bind('<<NotebookTabChanged>>', self.onTabChanged)
 
@@ -59,44 +59,44 @@ class Application(tk.Frame):
         self.prtListShow = ListShow(parent)
         self.prtListShow.grid(row=0, column=0, rowspan=8, sticky=tk.NSEW)
 
-        tk.Button(parent, text='选择文件', command=self.onGetSelectedPrts).grid(row=0, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text='选择文件夹', command=self.onGetPrtsFromSelectedFolder).grid(row=1, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text='所有打开文件', command=self.onGetOpenedPrts).grid(row=2, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text='工作部件', command=self.onWorkPrt).grid(row=3, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text='清空显示', command=self.prtListShow.clear).grid(row=4, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('选择文件'), command=self.onGetSelectedPrts).grid(row=0, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('选择文件夹'), command=self.onGetPrtsFromSelectedFolder).grid(row=1, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('所有打开文件'), command=self.onGetOpenedPrts).grid(row=2, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('工作部件'), command=self.onWorkPrt).grid(row=3, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('清空显示'), command=self.prtListShow.clear).grid(row=4, column=1, sticky=tk.NSEW)
         ttk.Separator(parent, orient=tk.HORIZONTAL).grid(row=5, column=1, columnspan=2, sticky=tk.EW, pady=5)
 
-        tk.Button(parent, text='设置选中项', command=self.onSetSelectedPrtStatus).grid(row=6, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text='设置所有', command=self.onSetAllPrtStatus).grid(row=7, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('设置选中项'), command=self.onSetSelectedPrtStatus).grid(row=6, column=1, sticky=tk.NSEW)
+        tk.Button(parent, text=_('设置所有'), command=self.onSetAllPrtStatus).grid(row=7, column=1, sticky=tk.NSEW)
         
         self.recursiveValue = tk.BooleanVar(parent, value=False)
-        tk.Checkbutton(parent, text='递归', variable=self.recursiveValue).grid(row=1, column=2, sticky=tk.W)
+        tk.Checkbutton(parent, text=_('递归'), variable=self.recursiveValue).grid(row=1, column=2, sticky=tk.W)
         self.selectedPrtStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text='导出', variable=self.selectedPrtStatusValue).grid(row=6, column=2, sticky=tk.W)
+        tk.Checkbutton(parent, text=_('导出'), variable=self.selectedPrtStatusValue).grid(row=6, column=2, sticky=tk.W)
         self.allPrtStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text='导出', variable=self.allPrtStatusValue).grid(row=7, column=2, sticky=tk.W)
+        tk.Checkbutton(parent, text=_('导出'), variable=self.allPrtStatusValue).grid(row=7, column=2, sticky=tk.W)
 
         ttk.Separator(parent, orient=tk.HORIZONTAL).grid(row=8, column=0, columnspan=3, sticky=tk.EW, pady=5)
 
         self.exportFolderValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.exportFolderValue, bd=3).grid(row=9, column=0, sticky=tk.NSEW)
-        tk.Button(parent, text='选择导出文件夹', command=self.onSelectExportFolder).grid(row=9, column=1, sticky=tk.NSEW)
-        tk.Label(parent, text='（可选）').grid(row=9, column=2, sticky=tk.W)
+        tk.Button(parent, text=_('选择导出文件夹'), command=self.onSelectExportFolder).grid(row=9, column=1, sticky=tk.NSEW)
+        tk.Label(parent, text=_('（可选）')).grid(row=9, column=2, sticky=tk.W)
 
         self.prefixNameValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.prefixNameValue,  bd=3).grid(row=10, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text='<--- 导出文件名前缀（可选）').grid(row=10, column=1, columnspan=2, sticky=tk.W)
+        tk.Label(parent, text=_('<--- 导出文件名前缀（可选）')).grid(row=10, column=1, columnspan=2, sticky=tk.W)
 
         self.suffixNameValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text='<--- 导出文件名后缀（可选）').grid(row=11, column=1, columnspan=2, sticky=tk.W)
+        tk.Label(parent, text=_('<--- 导出文件名后缀（可选）')).grid(row=11, column=1, columnspan=2, sticky=tk.W)
 
         self.drawingClassValue = tk.IntVar(parent, self.DrawingClass.PDF.value)
-        tk.Label(parent, text='导出格式：').grid(row=12, column=0, sticky=tk.E)
+        tk.Label(parent, text=_('导出格式：')).grid(row=12, column=0, sticky=tk.E)
         tk.Radiobutton(parent, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value).grid(row=12, column=1, sticky=tk.W)
         tk.Radiobutton(parent, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value).grid(row=12, column=2, sticky=tk.W)
 
-        self.exportButton = tk.Button(parent, text='导出', command=self.onExport, bd=3)
+        self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
         self.exportButton.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
 
         self.prtMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
@@ -114,26 +114,26 @@ class Application(tk.Frame):
         parent.rowconfigure([0,1,2,3,4,5,6], weight=1)
         parent.columnconfigure(0, weight=1)
 
-        self.pdfListShow = ListShow(parent, heading2='合并', heading3='PDF 图纸')
+        self.pdfListShow = ListShow(parent, heading2=_('合并'), heading3=_('PDF 图纸'))
         self.pdfListShow.grid(row=0, column=0, rowspan=4, sticky=tk.NSEW)
 
-        tk.Button(parent, text='打开文件', command=self.onOpenPdfs).grid(row=0, column=1, sticky=tk.EW)
-        tk.Button(parent, text='清空显示', command=self.pdfListShow.clear).grid(row=1, column=1, sticky=tk.EW)
-        tk.Button(parent, text='设置选中项', command=self.onSetSelectedPdfStatus).grid(row=2, column=1, sticky=tk.EW)
-        tk.Button(parent, text='设置所有', command=self.onSetAllPdfStatus).grid(row=3, column=1, sticky=tk.EW)
+        tk.Button(parent, text=_('打开文件'), command=self.onOpenPdfs).grid(row=0, column=1, sticky=tk.EW)
+        tk.Button(parent, text=_('清空显示'), command=self.pdfListShow.clear).grid(row=1, column=1, sticky=tk.EW)
+        tk.Button(parent, text=_('设置选中项'), command=self.onSetSelectedPdfStatus).grid(row=2, column=1, sticky=tk.EW)
+        tk.Button(parent, text=_('设置所有'), command=self.onSetAllPdfStatus).grid(row=3, column=1, sticky=tk.EW)
 
 
         self.selectedPdfStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text='合并', variable=self.selectedPdfStatusValue).grid(row=2, column=2, sticky=tk.W)
+        tk.Checkbutton(parent, text=_('合并'), variable=self.selectedPdfStatusValue).grid(row=2, column=2, sticky=tk.W)
 
         self.allPdfStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text='合并', variable=self.allPdfStatusValue).grid(row=3, column=2, sticky=tk.W)
+        tk.Checkbutton(parent, text=_('合并'), variable=self.allPdfStatusValue).grid(row=3, column=2, sticky=tk.W)
 
         self.savePdfNameValue = tk.StringVar(parent, value='')
         tk.Entry(parent, textvariable=self.savePdfNameValue, bd=3).grid(row=4, column=0, sticky=tk.EW)
 
-        tk.Button(parent, text='设置合并后的 PDF 文件名', command=self.onSaveMergedPdf).grid(row=4, column=1, sticky=tk.EW)
-        tk.Button(parent, text='合并', command=self.onMergePdf).grid(row=5, column=0, columnspan=3, sticky=tk.NSEW)
+        tk.Button(parent, text=_('设置合并后的 PDF 文件名'), command=self.onSaveMergedPdf).grid(row=4, column=1, sticky=tk.EW)
+        tk.Button(parent, text=_('合并'), command=self.onMergePdf).grid(row=5, column=0, columnspan=3, sticky=tk.NSEW)
 
         self.pdfMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
         self.pdfMsgText.grid(row=6, column=0, columnspan=3, sticky=tk.NSEW)
@@ -150,7 +150,7 @@ class Application(tk.Frame):
         pdfList = self.pdfListShow.getPrtList()
         savePdf = self.savePdfNameValue.get()
         if savePdf == '':
-            self.writeMsg('请设置合并后的 PDF 文件名')
+            self.writeMsg(_('请设置合并后的 PDF 文件名'))
             return
         
         self.exportButton.config(state=tk.DISABLED)
@@ -182,8 +182,8 @@ class Application(tk.Frame):
         打开要合并的 PDF 文件
         """
         pdfFiles = filedialog.askopenfilenames(
-            title='选择要合并的 PDF 文件',
-            filetypes=[('PDF 文件', '*.pdf')]
+            title=_('选择要合并的 PDF 文件'),
+            filetypes=[(_('PDF 文件'), '*.pdf')]
         )
         self.pdfListShow.insertPrtList(pdfFiles)
 
@@ -204,8 +204,8 @@ class Application(tk.Frame):
         保存合并的 PDF
         """
         saveFilename = filedialog.asksaveasfilename(
-            title='设置合并后的 PDF 文件名',
-            filetypes=[('PDF 文件', '*.pdf')],
+            title=_('设置合并后的 PDF 文件名'),
+            filetypes=[(_('PDF 文件'), '*.pdf')],
             defaultextension='.pdf'
         )
         if saveFilename == '':

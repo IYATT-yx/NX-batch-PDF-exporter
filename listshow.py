@@ -7,7 +7,7 @@ from tkinter import ttk
 import os
 
 class ListShow(tk.Frame):
-    def __init__(self, master, heading1: str = '序号', heading2: str = '导出', heading3: str = 'NX 图纸', defaultStatus = '是'):
+    def __init__(self, master, heading1: str = _('序号'), heading2: str = _('导出'), heading3: str = _('NX 图纸'), defaultStatus = _('是')):
         super().__init__(master)
         self.master = master
         self.number = 1
@@ -69,10 +69,10 @@ class ListShow(tk.Frame):
         if rowId == '':
             return
         status = self.tree.set(rowId)['status']
-        if status == '是':
-            self.tree.set(rowId, 'status', '否')
+        if status == _('是'):
+            self.tree.set(rowId, 'status', _('否'))
         else:
-            self.tree.set(rowId, 'status', '是')
+            self.tree.set(rowId, 'status', _('是'))
 
     def setAllStatus(self, status: bool = True):
         """
@@ -82,7 +82,7 @@ class ListShow(tk.Frame):
             status (bool, optional): 导出状态. Defaults to True.
         """
         for rowId in self.tree.get_children():
-            self.tree.set(rowId, 'status', '是' if status else '否')
+            self.tree.set(rowId, 'status', _('是') if status else _('否'))
 
     def setSelectedStatus(self, status: bool = True):
         """
@@ -92,7 +92,7 @@ class ListShow(tk.Frame):
             status (bool, optional): 导出状态. Defaults to True.
         """
         for rowId in self.tree.selection():
-            self.tree.set(rowId, 'status', '是' if status else '否')
+            self.tree.set(rowId, 'status', _('是') if status else _('否'))
 
     def getPrtList(self) -> list[str]:
         """
@@ -101,7 +101,7 @@ class ListShow(tk.Frame):
         Returns:
             list[str]: 需要导出的图纸列表
         """
-        return [self.tree.set(rowId)['filePath'] for rowId in self.tree.get_children() if self.tree.set(rowId)['status'] == '是']
+        return [self.tree.set(rowId)['filePath'] for rowId in self.tree.get_children() if self.tree.set(rowId)['status'] == _('是')]
         
 
 
