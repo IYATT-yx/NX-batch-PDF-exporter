@@ -1,3 +1,11 @@
+"""
+file: nxmodules.py
+description: NX 相关调用功能模块
+author: IYATT-yx
+repository: https://github.com/IYATT-yx/NX-batch-PDF-exporter
+copyright:  Copyright (c) 2026 IYATT-yx.
+            Licensed under the MIT License. See LICENSE file in the project root for full license information.
+"""
 from tkinter import filedialog
 import tkinter as tk
 import NXOpen
@@ -180,7 +188,8 @@ class NxModules:
             pdfbuilder.Destroy()
 
             writeMsg(_('  [✓] PDF 导出成功'), 'success') # 成功色
-            writeMsg(_('      📍 路径: {filename}'))
+            msg: str = _('      📍 路径: {filename}')
+            writeMsg(msg.format(filename=filename))
             return True
         except Exception as e:
             msg: str = _('  [✘] PDF 导出异常: {e}')

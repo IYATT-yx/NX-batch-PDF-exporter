@@ -1,3 +1,11 @@
+"""
+file: application.py
+description: 图形界面
+author: IYATT-yx
+repository: https://github.com/IYATT-yx/NX-batch-PDF-exporter
+copyright:  Copyright (c) 2026 IYATT-yx.
+            Licensed under the MIT License. See LICENSE file in the project root for full license information.
+"""
 from listshow import ListShow
 from nxmodules import NxModules
 import version

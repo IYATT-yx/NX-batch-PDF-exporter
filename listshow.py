@@ -1,5 +1,10 @@
 """
-图纸列表显示控件
+file: listshow.py
+description: 列表显示模块
+author: IYATT-yx
+repository: https://github.com/IYATT-yx/NX-batch-PDF-exporter
+copyright:  Copyright (c) 2026 IYATT-yx.
+            Licensed under the MIT License. See LICENSE file in the project root for full license information.
 """
 import tkinter as tk
 from tkinter import ttk
