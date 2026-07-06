@@ -103,7 +103,6 @@ class NxModules:
         session = NXOpen.Session.GetSession()
         total = len(prtList)
         counter = 0
-        timestamp = datetime.now().strftime("_%Y%m%d_%H%M%S")
         
         writeMsg("=" * 50)
         msg: str = _('🚀 开始批量任务 | 共计: {total} 个文件')
@@ -134,7 +133,7 @@ class NxModules:
                     continue
 
             # 执行导出函数
-            if func(part, prefixName, suffixName + timestamp, folder, writeMsg):
+            if func(part, prefixName, suffixName, folder, writeMsg):
                 counter += 1
 
             if closePart:
