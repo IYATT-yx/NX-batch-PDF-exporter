@@ -22,8 +22,7 @@
 ## 测试环境
 
 * Siemens NX 2506
-* 内置 Python 版本：3.12.8  
-* pypdf 6.7.5
+* Designcenter 2606（2026 年 Siemens 给改了个新名字）
 
 ## 使用方法
 
