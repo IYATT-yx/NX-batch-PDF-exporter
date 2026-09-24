@@ -41,8 +41,9 @@ class Application(tk.Frame):
         """
         创建组件
         """
+        # 顶部：Notebook 区域（设置权重大，优先拉伸）
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(expand=True, fill=tk.BOTH)
+        self.notebook.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         self.exportPdfTab = ttk.Frame(self.notebook)
         self.createExportPdfTab(self.exportPdfTab)
@@ -52,7 +53,10 @@ class Application(tk.Frame):
         self.createMergePdfTab(self.mergePdfTab)
         self.notebook.add(self.mergePdfTab, text=_('合并PDF'))
 
-        self.notebook.bind('<<NotebookTabChanged>>', self.onTabChanged)
+        # 底部：公用日志输出框（固定在最下方）
+        self.msgText = tk.Text(self, wrap=tk.CHAR, height=8, state=tk.DISABLED)
+        self.msgText.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
+        self._config_text_tags(self.msgText)
 
     def createExportPdfTab(self, parent: tk.Frame):
         """
@@ -107,11 +111,6 @@ class Application(tk.Frame):
         self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
         self.exportButton.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
 
-        self.prtMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
-        self.prtMsgText.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
-        self._config_text_tags(self.prtMsgText)
-        self.msgText = self.prtMsgText
-
     def createMergePdfTab(self, parent: tk.Frame):
         """
         创建合并 PDF 页面
@@ -143,10 +142,6 @@ class Application(tk.Frame):
         tk.Button(parent, text=_('设置合并后的 PDF 文件名'), command=self.onSaveMergedPdf).grid(row=4, column=1, sticky=tk.EW)
         tk.Button(parent, text=_('合并'), command=self.onMergePdf).grid(row=5, column=0, columnspan=3, sticky=tk.NSEW)
 
-        self.pdfMsgText = tk.Text(parent, wrap=tk.CHAR, height=10, state=tk.DISABLED)
-        self.pdfMsgText.grid(row=6, column=0, columnspan=3, sticky=tk.NSEW)
-        self._config_text_tags(self.pdfMsgText)
-
     def _config_text_tags(self, text_widget: tk.Text):
         """配置 Text 组件的颜色标签"""
         text_widget.tag_config('info', foreground='black')      # 普通消息
@@ -167,24 +162,6 @@ class Application(tk.Frame):
         self.update()
         self.exportButton.config(state=tk.NORMAL)
 
-    def onTabChanged(self, event: tk.Event):
-        """
-        切换标签页事件处理，根据当前标签页设置消息框
-
-        Args:
-            event (tk.Event): 事件对象
-        """
-        currentTabId = self.notebook.select()
-        if not currentTabId:
-            return
-
-        currentFrame = self.notebook.nametowidget(currentTabId)
-        match currentFrame:
-            case self.exportPdfTab:
-                self.msgText = self.prtMsgText
-            case self.mergePdfTab:
-                self.msgText = self.pdfMsgText
-    
     def onOpenPdfs(self):
         """
         打开要合并的 PDF 文件
