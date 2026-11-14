@@ -108,8 +108,13 @@ class Application(tk.Frame):
         tk.Radiobutton(parent, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value).grid(row=12, column=1, sticky=tk.W)
         tk.Radiobutton(parent, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value).grid(row=12, column=2, sticky=tk.W)
 
+        tk.Label(parent, text=_('图像分辨率（仅对PDF导出）：')).grid(row=13, column=0, sticky=tk.E)
+        self.imageResolutionCombox = ttk.Combobox(parent, values=list(NxModules.ImageResolution.keys()), state='readonly')
+        self.imageResolutionCombox.grid(row=13, column=1, columnspan=2, sticky=tk.W)
+        self.imageResolutionCombox.set(list(NxModules.ImageResolution.keys())[0])
+
         self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
-        self.exportButton.grid(row=13, column=0, columnspan=3, sticky=tk.NSEW)
+        self.exportButton.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
 
     def createMergePdfTab(self, parent: tk.Frame):
         """
@@ -198,7 +203,6 @@ class Application(tk.Frame):
         saveFilename = os.path.normpath(saveFilename)
         self.savePdfNameValue.set(saveFilename)
 
-
     def onGetSelectedPrts(self):
         """
         获取选择的文件
@@ -267,6 +271,9 @@ class Application(tk.Frame):
         self.msgText.see(tk.END)
         self.msgText.update_idletasks()
 
+    def getImageResolution(self):
+        return NxModules.ImageResolution[self.imageResolutionCombox.get()]
+
     def onExport(self):
         """"
         导出
@@ -278,7 +285,7 @@ class Application(tk.Frame):
         self.exportButton.config(state=tk.DISABLED)
         match self.drawingClassValue.get():
             case self.DrawingClass.PDF.value:
-                NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
+                NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg, self.getImageResolution())
             case self.DrawingClass.DWG.value:
                 NxModules.foreachPrt(NxModules.exportDwg, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
         # NX 2506 中执行时有异常，必须执行 update，否则按钮禁用状态下的点击也会留到本轮执行结束后继续触发

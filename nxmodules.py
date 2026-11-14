@@ -15,6 +15,13 @@ import os
 from datetime import datetime
 
 class NxModules:
+    ImageResolution = {
+        _('高'): NXOpen.PrintPDFBuilder.ImageResolutionOption.High,
+        _('中'): NXOpen.PrintPDFBuilder.ImageResolutionOption.Medium,
+        _('低'): NXOpen.PrintPDFBuilder.ImageResolutionOption.Low,
+        _('草稿'): NXOpen.PrintPDFBuilder.ImageResolutionOption.Draft
+    }
+
     @staticmethod
     def selectPrts() -> list[str]:
         """
@@ -88,7 +95,7 @@ class NxModules:
         return [workPrt.FullPath]
     
     @staticmethod
-    def foreachPrt(func, prtList: list[str], prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
+    def foreachPrt(func, prtList: list[str], prefixName: str, suffixName: str, folder: str, writeMsg: Callable, imageResolution):
         """
         对每个 NX 文件执行指定函数
 
@@ -99,6 +106,7 @@ class NxModules:
             suffixName (str): 文件名后缀
             folder (str): 文件保存路径
             writeMsg (function): 用于输出消息的函数
+            imageResolution: 图片分辨率
         """
         session = NXOpen.Session.GetSession()
         total = len(prtList)
@@ -133,7 +141,7 @@ class NxModules:
                     continue
 
             # 执行导出函数
-            if func(part, prefixName, suffixName, folder, writeMsg):
+            if func(part, prefixName, suffixName, folder, writeMsg, imageResolution):
                 counter += 1
 
             if closePart:
@@ -153,7 +161,7 @@ class NxModules:
         writeMsg("=" * 50)
 
     @staticmethod
-    def exportPdf(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable):
+    def exportPdf(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable, imageResolution):
         """
         导出 PDF
 
@@ -163,6 +171,7 @@ class NxModules:
             suffixName (str): 文件名后缀
             folder (str): 文件保存路径
             writeMsg (function): 用于输出消息的函数
+            imageResolution (int): 图像分辨率
         
         Returns:
             bool: 导出是否成功
@@ -179,8 +188,17 @@ class NxModules:
             
             for sheet in sheets:
                 sheet.Open()
-            
-            pdfbuilder.Filename = filename
+
+            pdfbuilder.ImageResolution = imageResolution
+            pdfbuilder.OutputText = NXOpen.PrintPDFBuilder.OutputTextOption.Polylines # 设置输出文本为多段线
+            pdfbuilder.Size = NXOpen.PrintPDFBuilder.SizeOption.ScaleFactor # 大小按比例因子
+            pdfbuilder.Scale = 1.0 # 比例因子
+            pdfbuilder.RasterImages = True # 在图纸中导出光栅图像
+            pdfbuilder.Colors = NXOpen.PrintPDFBuilder.Color.AsDisplayed # 颜色按显示
+            pdfbuilder.Widths = NXOpen.PrintPDFBuilder.Width.StandardWidths # 线宽按标准线宽
+            pdfbuilder.AddWatermark = False # 不添加水印
+            pdfbuilder.Watermark = '' # 水印内容为空
+            pdfbuilder.Filename = filename # 设置输出文件名
             pdfbuilder.SourceBuilder.SetSheets(sheets)
             
             pdfbuilder.Commit()
