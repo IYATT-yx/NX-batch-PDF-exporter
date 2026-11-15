@@ -59,95 +59,110 @@ class Application(tk.Frame):
         self.msgText.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
         self._config_text_tags(self.msgText)
 
-    def createExportPdfTab(self, parent: tk.Frame):
-        """
-        创建导出 PDF 页面
+    def createPrtListPanel(self, parent: tk.Frame) -> tk.Frame:
+        '''创建图纸展示区'''
+        prtListFrame = tk.Frame(parent)
 
-        Args:
-            parent (tk.Frame): 父组件
-        """
-        parent.rowconfigure([0,1,2,3,4,5,6], weight=1)
-        parent.columnconfigure(0, weight=1)
+        totalRows = 8
+        self.prtListShow = ListShow(prtListFrame)
+        self.prtListShow.grid(row=0, column=0, rowspan=totalRows, sticky=tk.NSEW)
+        prtListFrame.rowconfigure(totalRows-1, weight=1)
+        prtListFrame.columnconfigure(0, weight=1)
 
-        self.prtListShow = ListShow(parent)
-        self.prtListShow.grid(row=0, column=0, rowspan=8, sticky=tk.NSEW)
+        # 操作区
+        operationFrame = tk.LabelFrame(prtListFrame, text=_('打开图纸'))
+        operationFrame.grid(row=0, column=1, rowspan=5, columnspan=2, sticky=tk.NSEW)
 
-        tk.Button(parent, text=_('选择文件'), command=self.onGetSelectedPrts).grid(row=0, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text=_('选择文件夹'), command=self.onGetPrtsFromSelectedFolder).grid(row=1, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text=_('所有打开文件'), command=self.onGetOpenedPrts).grid(row=2, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text=_('工作部件'), command=self.onWorkPrt).grid(row=3, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text=_('清空显示'), command=self.prtListShow.clear).grid(row=4, column=1, sticky=tk.NSEW)
-        ttk.Separator(parent, orient=tk.HORIZONTAL).grid(row=5, column=1, columnspan=2, sticky=tk.EW, pady=5)
+        tk.Button(operationFrame, text=_('打开文件'), command=self.onGetSelectedPrts).grid(row=0, column=0, sticky=tk.NSEW)
+        tk.Button(operationFrame, text=_('打开文件夹'), command=self.onGetPrtsFromSelectedFolder).grid(row=1, column=0, sticky=tk.NSEW)
+        tk.Button(operationFrame, text=_('当前打开文件'), command=self.onGetOpenedPrts).grid(row=2, column=0, sticky=tk.NSEW)
+        tk.Button(operationFrame, text=_('当前显示文件'), command=self.onWorkPrt).grid(row=3, column=0, sticky=tk.NSEW)
+        tk.Button(operationFrame, text=_('清空显示列表'), command=self.prtListShow.clear).grid(row=4, column=0, sticky=tk.NSEW)
 
-        tk.Button(parent, text=_('设置选中项'), command=self.onSetSelectedPrtStatus).grid(row=6, column=1, sticky=tk.NSEW)
-        tk.Button(parent, text=_('设置所有'), command=self.onSetAllPrtStatus).grid(row=7, column=1, sticky=tk.NSEW)
-        
         self.recursiveValue = tk.BooleanVar(parent, value=False)
-        tk.Checkbutton(parent, text=_('递归'), variable=self.recursiveValue).grid(row=1, column=2, sticky=tk.W)
+        tk.Checkbutton(operationFrame, text=_('递归'), variable=self.recursiveValue).grid(row=1, column=2, sticky=tk.W)
+
+        # 导出状态批量设置
+        statusFrame = tk.LabelFrame(prtListFrame, text=_('导出状态批量设置'))
+        statusFrame.grid(row=5, column=1, rowspan=2, columnspan=2, sticky=tk.NSEW)
+
+        tk.Button(statusFrame, text=_('设置选中项'), command=self.onSetSelectedPrtStatus).grid(row=0, column=0, sticky=tk.NSEW)
+        tk.Button(statusFrame, text=_('设置所有'), command=self.onSetAllPrtStatus).grid(row=1, column=0, sticky=tk.NSEW)
+
         self.selectedPrtStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text=_('导出'), variable=self.selectedPrtStatusValue).grid(row=6, column=2, sticky=tk.W)
+        tk.Checkbutton(statusFrame, text=_('导出'), variable=self.selectedPrtStatusValue).grid(row=0, column=2, sticky=tk.W)
         self.allPrtStatusValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(parent, text=_('导出'), variable=self.allPrtStatusValue).grid(row=7, column=2, sticky=tk.W)
+        tk.Checkbutton(statusFrame, text=_('导出'), variable=self.allPrtStatusValue).grid(row=1, column=2, sticky=tk.W)
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).grid(row=8, column=0, columnspan=3, sticky=tk.EW, pady=5)
+        return prtListFrame
 
+    def createExportFilenameSettingPanel(self, parent: tk.Frame) -> tk.LabelFrame:
+        '''创建导出文件名设置区'''
+        exportFilenameSettingFrame = tk.LabelFrame(parent, text=_('导出文件名设置'))
+        exportFilenameSettingFrame.columnconfigure(1, weight=1)
+
+        tk.Label(exportFilenameSettingFrame, text=_('导出文件夹：')).grid(row=0, column=0, sticky=tk.W)
         self.exportFolderValue = tk.StringVar(parent, value='')
-        tk.Entry(parent, textvariable=self.exportFolderValue, bd=3).grid(row=9, column=0, sticky=tk.NSEW)
-        tk.Button(parent, text=_('选择导出文件夹'), command=self.onSelectExportFolder).grid(row=9, column=1, sticky=tk.NSEW)
-        tk.Label(parent, text=_('（可选）')).grid(row=9, column=2, sticky=tk.W)
+        tk.Entry(exportFilenameSettingFrame, textvariable=self.exportFolderValue, bd=3).grid(row=0, column=1, sticky=tk.NSEW)
+        tk.Button(exportFilenameSettingFrame, text=_('选择导出文件夹'), command=self.onSelectExportFolder).grid(row=0, column=2, sticky=tk.NSEW)
 
+        tk.Label(exportFilenameSettingFrame, text=_('文件名前缀（可选）：')).grid(row=1, column=0, sticky=tk.W)
         self.prefixNameValue = tk.StringVar(parent, value='')
-        tk.Entry(parent, textvariable=self.prefixNameValue,  bd=3).grid(row=10, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text=_('<--- 导出文件名前缀（可选）')).grid(row=10, column=1, columnspan=2, sticky=tk.W)
+        tk.Entry(exportFilenameSettingFrame, textvariable=self.prefixNameValue,  bd=3).grid(row=1, column=1, sticky=tk.NSEW)
 
+        tk.Label(exportFilenameSettingFrame, text=_('文件名后缀（可选）：')).grid(row=2, column=0, sticky=tk.W)
         self.suffixNameValue = tk.StringVar(parent, value='')
-        tk.Entry(parent, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
-        tk.Label(parent, text=_('<--- 导出文件名后缀（可选）')).grid(row=11, column=1, columnspan=2, sticky=tk.W)
+        tk.Entry(exportFilenameSettingFrame, textvariable=self.suffixNameValue, bd=3).grid(row=2, column=1, sticky=tk.NSEW)
 
-        exportFormatBox = tk.LabelFrame(parent, text=_('导出格式'), padx=10, pady=10)
-        exportFormatBox.grid(row=12, column=0, columnspan=3, sticky=tk.NSEW)
-        for c in range(3):
-            exportFormatBox.columnconfigure(c, weight=1)
+        return exportFilenameSettingFrame
+
+    def createExportFormatPanel(self, parent: tk.Frame) -> tk.LabelFrame:
+        '''创建导出格式选择区'''
+        exportFormatFrame = tk.LabelFrame(parent, text=_('导出格式'))
+
         self.drawingClassValue = tk.IntVar(parent, self.DrawingClass.PDF.value)
-        tk.Radiobutton(exportFormatBox, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value, command=self.onChangeDrawingClass).grid(row=0, column=1, sticky=tk.W)
-        tk.Radiobutton(exportFormatBox, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value, command=self.onChangeDrawingClass).grid(row=0, column=2, sticky=tk.W)
+        tk.Radiobutton(exportFormatFrame, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value, command=self.onChangeDrawingClass).grid(row=0, column=1, sticky=tk.W)
+        tk.Radiobutton(exportFormatFrame, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value, command=self.onChangeDrawingClass).grid(row=0, column=2, sticky=tk.W)
 
-        # PDF 导出设置
-        self.pdfSettingBox = tk.LabelFrame(parent, text=_('PDF 导出设置'), padx=10, pady=10)
-        self.pdfSettingBox.grid(row=13, column=0, columnspan=6, sticky=tk.NSEW)
+        return exportFormatFrame
+
+    def createExportPdfSettingPanel(self, parent: tk.Frame) -> tk.LabelFrame:
+        '''创建导出 PDF 设置区'''
+        pdfSettingFrame = tk.LabelFrame(parent, text=_('PDF 导出设置'))
         for c in range(6):
-            self.pdfSettingBox.columnconfigure(c, weight=1)
+            pdfSettingFrame.columnconfigure(c, weight=1)
 
         # 打印属性 - 颜色
-        tk.Label(self.pdfSettingBox, text=_('颜色：')).grid(row=0, column=0, sticky=tk.E)
-        self.colorCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.Color.keys()), state='readonly')
+        tk.Label(pdfSettingFrame, text=_('颜色：')).grid(row=0, column=0, sticky=tk.E)
+        self.colorCombox = ttk.Combobox(pdfSettingFrame, values=list(NxModules.Color.keys()), state='readonly')
         self.colorCombox.grid(row=0, column=1, sticky=tk.W)
         self.colorCombox.set(list(NxModules.Color.keys())[0]) # 按显示
 
         # 打印属性 - 宽度
-        tk.Label(self.pdfSettingBox, text=_('宽度：')).grid(row=0, column=2, sticky=tk.E)
-        self.widthCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.Width.keys()), state='readonly')
+        tk.Label(pdfSettingFrame, text=_('宽度：')).grid(row=0, column=2, sticky=tk.E)
+        self.widthCombox = ttk.Combobox(pdfSettingFrame, values=list(NxModules.Width.keys()), state='readonly')
         self.widthCombox.grid(row=0, column=3, sticky=tk.W)
         self.widthCombox.set(list(NxModules.Width.keys())[0]) # 标准宽度
 
         # 打印属性 - 大小
-        tk.Label(self.pdfSettingBox, text=_('大小：')).grid(row=0, column=4, sticky=tk.E)
-        self.sizeOptionCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.SizeOption.keys()), state='readonly')
+        tk.Label(pdfSettingFrame, text=_('大小：')).grid(row=0, column=4, sticky=tk.E)
+        self.sizeOptionCombox = ttk.Combobox(pdfSettingFrame, values=list(NxModules.SizeOption.keys()), state='readonly')
         self.sizeOptionCombox.grid(row=0, column=5, sticky=tk.W)
-        self.sizeOptionCombox.bind("<<ComboboxSelected>>", self.onChangeSizeOption)
         self.sizeOptionCombox.set(list(NxModules.SizeOption.keys())[1]) # 比例因子
+        self.sizeOptionCombox.bind("<<ComboboxSelected>>", self.onChangeSizeOption)
 
         # 打印属性 - 比例因子
-        self.scaleFactorFrame = tk.LabelFrame(self.pdfSettingBox, text=_('比例因子'))
+        self.scaleFactorFrame = tk.LabelFrame(pdfSettingFrame, text=_('比例因子'))
         self.scaleFactorFrame.grid(row=1, column=0, columnspan=6, sticky=tk.NSEW)
         for c in range(6):
             self.scaleFactorFrame.columnconfigure(c, weight=1)
+
         tk.Label(self.scaleFactorFrame, text=_('比例因子：')).grid(row=0, column=4, sticky=tk.E)
         self.scaleFactorValue = tk.DoubleVar(parent, value='3.0')
-        tk.Entry(self.scaleFactorFrame, textvariable=self.scaleFactorValue, bd=3).grid(row=0, column=5, sticky=tk.W)
+        tk.Entry(self.scaleFactorFrame, textvariable=self.scaleFactorValue, bd=3).grid(row=0, column=5, sticky=tk.NSEW)
 
         # 打印属性 - 尺寸
-        self.dimensionFrame = tk.LabelFrame(self.pdfSettingBox, text=_('尺寸'))
+        self.dimensionFrame = tk.LabelFrame(pdfSettingFrame, text=_('尺寸'))
         self.dimensionFrame.grid(row=2, column=0, columnspan=6, sticky=tk.NSEW)
         for c in range(6):
             self.dimensionFrame.columnconfigure(c, weight=1)
@@ -167,47 +182,67 @@ class Application(tk.Frame):
         tk.Entry(self.dimensionFrame, textvariable=self.dimensionYValue, bd=3).grid(row=0, column=5, sticky=tk.W)
 
         # 设置
-        self.settingBox = tk.LabelFrame(self.pdfSettingBox, text=_('设置'), padx=10, pady=10)
-        self.settingBox.grid(row=3, column=0, columnspan=6, sticky=tk.NSEW)
+        self.settingFrame = tk.LabelFrame(pdfSettingFrame, text=_('设置'))
+        self.settingFrame.grid(row=3, column=0, columnspan=6, sticky=tk.NSEW)
         for c in range(6):
-            self.settingBox.columnconfigure(c, weight=1)
+            self.settingFrame.columnconfigure(c, weight=1)
 
-        tk.Label(self.settingBox, text=_('输出文本：')).grid(row=0, column=0, sticky=tk.E)
-        self.outputTextOptionCombox = ttk.Combobox(self.settingBox, values=list(NxModules.OutputTextOption.keys()), state='readonly')
+        tk.Label(self.settingFrame, text=_('输出文本：')).grid(row=0, column=0, sticky=tk.E)
+        self.outputTextOptionCombox = ttk.Combobox(self.settingFrame, values=list(NxModules.OutputTextOption.keys()), state='readonly')
         self.outputTextOptionCombox.grid(row=0, column=1, sticky=tk.W)
         self.outputTextOptionCombox.set(list(NxModules.OutputTextOption.keys())[1]) # 多段线
 
         self.addWatermarkBoolValue = tk.BooleanVar(parent, value=False)
-        tk.Checkbutton(self.settingBox, text=_('添加水印'), variable=self.addWatermarkBoolValue, command=self.onChangeAddWatermark).grid(row=0, column=2, sticky=tk.E)
+        tk.Checkbutton(self.settingFrame, text=_('添加水印'), variable=self.addWatermarkBoolValue, command=self.onChangeAddWatermark).grid(row=0, column=2, sticky=tk.E)
         self.watermarkTextValue = tk.StringVar(parent, value='')
-        self.watermarkEntry = tk.Entry(self.settingBox, textvariable=self.watermarkTextValue, bd=3)
+        self.watermarkEntry = tk.Entry(self.settingFrame, textvariable=self.watermarkTextValue, bd=3)
         self.watermarkEntry.grid(row=0, column=3, columnspan=3, sticky=tk.NSEW)
 
         # 设置 - 图纸页
-        self.paperSettingBox = tk.LabelFrame(self.settingBox, text=_('图纸页'), padx=10, pady=10)
-        self.paperSettingBox.grid(row=1, column=0, columnspan=6, sticky=tk.NSEW)
+        self.paperSettingFrame = tk.LabelFrame(self.settingFrame, text=_('图纸页'))
+        self.paperSettingFrame.grid(row=1, column=0, columnspan=6, sticky=tk.NSEW)
         for c in range(6):
-            self.paperSettingBox.columnconfigure(c, weight=1)
+            self.paperSettingFrame.columnconfigure(c, weight=1)
 
         self.rasterImagesBoolValue = tk.BooleanVar(parent, value=True)
-        tk.Checkbutton(self.paperSettingBox, text=_('在图纸上导出光栅图像'), variable=self.rasterImagesBoolValue, command=self.onChangeRaster).grid(row=0, column=0, sticky=tk.W)
+        tk.Checkbutton(self.paperSettingFrame, text=_('在图纸上导出光栅图像'), variable=self.rasterImagesBoolValue, command=self.onChangeRaster).grid(row=0, column=0, sticky=tk.W)
 
         self.shadedGeometryBoolValue = tk.BooleanVar(parent, value=False)
-        self.shadedGeometryCheckBtn = tk.Checkbutton(self.paperSettingBox, text=_('将着色的几何体导出为线框'), variable=self.shadedGeometryBoolValue)
+        self.shadedGeometryCheckBtn = tk.Checkbutton(self.paperSettingFrame, text=_('将着色的几何体导出为线框'), variable=self.shadedGeometryBoolValue)
         self.shadedGeometryCheckBtn.grid(row=0, column=1, sticky=tk.W)
 
         self.customSymbolsInForegroundBoolValue = tk.BooleanVar(parent, value=False)
-        tk.Checkbutton(self.paperSettingBox, text=_('在前景中导出定制符号'), variable=self.customSymbolsInForegroundBoolValue).grid(row=0, column=2, sticky=tk.W)
+        tk.Checkbutton(self.paperSettingFrame, text=_('在前景中导出定制符号'), variable=self.customSymbolsInForegroundBoolValue).grid(row=0, column=2, sticky=tk.W)
 
-        tk.Label(self.paperSettingBox, text=_('图像分辨率：')).grid(row=0, column=3, sticky=tk.E)
-        self.imageResolutionCombox = ttk.Combobox(self.paperSettingBox, values=list(NxModules.ImageResolution.keys()), state='readonly')
+        tk.Label(self.paperSettingFrame, text=_('图像分辨率：')).grid(row=0, column=3, sticky=tk.E)
+        self.imageResolutionCombox = ttk.Combobox(self.paperSettingFrame, values=list(NxModules.ImageResolution.keys()), state='readonly')
         self.imageResolutionCombox.grid(row=0, column=4, sticky=tk.W)
         self.imageResolutionCombox.set(list(NxModules.ImageResolution.keys())[0]) # 高
 
-        self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
-        self.exportButton.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
+        return pdfSettingFrame
 
-        # 初始化选项状态
+
+    def createExportPdfTab(self, parent: tk.Frame):
+        """
+        创建导出 PDF 页面
+
+        Args:
+            parent (tk.Frame): 父组件
+        """
+        prtListFrame = self.createPrtListPanel(parent)
+        prtListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        exportFilenameSettingFrame = self.createExportFilenameSettingPanel(parent)
+        exportFormatFrame = self.createExportFormatPanel(parent)
+        self.pdfSettingFrame = self.createExportPdfSettingPanel(parent)
+
+        frameList = [exportFilenameSettingFrame, exportFormatFrame, self.pdfSettingFrame]
+        for frame in frameList:
+            frame.pack(side=tk.TOP, fill=tk.X)
+
+        self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
+        self.exportButton.pack(side=tk.BOTTOM, fill=tk.BOTH)
+
         self.onChangeSizeOption()
         self.onChangeAddWatermark()
 
@@ -229,9 +264,9 @@ class Application(tk.Frame):
     def onChangeDrawingClass(self):
         """切换导出格式"""
         if self.drawingClassValue.get() == self.DrawingClass.PDF.value:
-            self.pdfSettingBox.grid()
+            self.pdfSettingFrame.pack(side=tk.TOP, fill=tk.X)
         else:
-            self.pdfSettingBox.grid_remove()
+            self.pdfSettingFrame.pack_forget()
 
     def onChangeSizeOption(self, event=None):
         """切换尺寸选项"""
