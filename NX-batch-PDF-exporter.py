@@ -1,6 +1,6 @@
 """
 file: NX-batch-PDF-exporter.py
-description: Siemens NX 批量 PDF 图纸导出工具
+description: Siemens NX/Designcenter 批量 PDF 图纸导出工具
 author: IYATT-yx
 repository: https://github.com/IYATT-yx/NX-batch-PDF-exporter
 copyright:  Copyright (c) 2026 IYATT-yx.

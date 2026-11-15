@@ -16,7 +16,7 @@ from tkinter import ttk, filedialog, messagebox
 import os
 from enum import Enum, auto
 
-programName = _('Siemens NX 批量 PDF 图纸导出工具')
+programName = _('Siemens NX/Designcenter 批量 PDF 图纸导出工具')
 baseDir = os.path.dirname(os.path.abspath(__file__))
 tclDir = os.path.join(baseDir, 'tcl', 'tcl8.6')
 os.environ["TCL_LIBRARY"] = tclDir
