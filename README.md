@@ -1,17 +1,7 @@
-# NX-batch-PDF-exporter【Siemens NX 批量 PDF 图纸导出工具】
-
-2025/11/30  
-本工具是用于批量导出 Siemens NX 图纸到 PDF 文件的，可以多选图纸文件，工具依次导出 PDF。  
-本来计划是上周写好的，当时初步拟定了框架，结果上周五、周六去出差了，回来也不想写了。这周我又沉迷于看动漫去了，下班时间都花完了，今天星期天又想起来，现在晚上十点多点，基本功能应该是可以用了。我也不知道会不会有隐藏的 bug，只有后面使用中测试了，有问题就再改。  
-
-2026/3/6  
-新加了 PDF 合并功能。导出的图纸比较多的时候，文件多了也很繁杂，可以多选 PDF 文件，然后合并成一个 PDF 文件。我平时是使用 Adobe Acrobat 来处理的，考虑到有些用户可能没有 PDF 编辑软件，所以加了这个功能。  
-
-2026/3/7  
-根据网友提的要求希望增加 AutoCAD DWG 图纸导出格式，中午午休时间没事给加上了。  
+# NX-batch-PDF-exporter【Siemens NX/Designcenter 批量 PDF 图纸导出工具】
 
 ![alt text](doc/image1.png)  
-![alt text](doc/image8.png)
+NX-batch-PDF-exporter 是为 Siemens NX/Designcenter 开发的批量图纸导出工具。
 
 ## 功能说明
 
@@ -21,8 +11,8 @@
 
 ## 测试环境
 
-* Siemens NX 2506
-* Designcenter 2606（2026 年 Siemens 给改了个新名字）
+* Siemens NX 2506（停止测试）
+* Designcenter 2606（正在测试）
 
 ## 使用方法
 
@@ -75,8 +65,6 @@ python .\locales\i18n\msgfmt.py -o locales\en_US\LC_MESSAGES\messages.mo locales
 
 【4】说明：  
 本工具会自动获取系统的语言，并匹配对应语言文件夹下的 mo 文件用于工具实际的语言显示，没有匹配语言的 mo 文件时则显示中文。语言文件夹命名如：美式英语 en_US，日语 ja_JP，德语 de_DE 等。    
-
-
 
 ## 版权与许可
 

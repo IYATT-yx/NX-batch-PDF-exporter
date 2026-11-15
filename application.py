@@ -12,7 +12,7 @@ import version
 from pdfmodules import PdfModules
 
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 import os
 from enum import Enum, auto
 
@@ -32,6 +32,7 @@ class Application(tk.Frame):
         self.pack(fill=tk.BOTH, expand=True)
 
         self.msgText = None
+        self.pdfSettingObj = None
 
         self.createWidgets()
         msg: str = _('{programName} {version}\nIYATT-yx iyatt@iyatt.com\n本工具为开源项目，发布地址：https://github.com/IYATT-yx/NX-batch-PDF-exporter')
@@ -54,7 +55,7 @@ class Application(tk.Frame):
         self.notebook.add(self.mergePdfTab, text=_('合并PDF'))
 
         # 底部：公用日志输出框（固定在最下方）
-        self.msgText = tk.Text(self, wrap=tk.CHAR, height=8, state=tk.DISABLED)
+        self.msgText = tk.Text(self, wrap=tk.CHAR, height=16, state=tk.DISABLED)
         self.msgText.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
         self._config_text_tags(self.msgText)
 
@@ -103,18 +104,167 @@ class Application(tk.Frame):
         tk.Entry(parent, textvariable=self.suffixNameValue, bd=3).grid(row=11, column=0, sticky=tk.NSEW)
         tk.Label(parent, text=_('<--- 导出文件名后缀（可选）')).grid(row=11, column=1, columnspan=2, sticky=tk.W)
 
+        exportFormatBox = tk.LabelFrame(parent, text=_('导出格式'), padx=10, pady=10)
+        exportFormatBox.grid(row=12, column=0, columnspan=3, sticky=tk.NSEW)
+        for c in range(3):
+            exportFormatBox.columnconfigure(c, weight=1)
         self.drawingClassValue = tk.IntVar(parent, self.DrawingClass.PDF.value)
-        tk.Label(parent, text=_('导出格式：')).grid(row=12, column=0, sticky=tk.E)
-        tk.Radiobutton(parent, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value).grid(row=12, column=1, sticky=tk.W)
-        tk.Radiobutton(parent, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value).grid(row=12, column=2, sticky=tk.W)
+        tk.Radiobutton(exportFormatBox, text='PDF', variable=self.drawingClassValue, value=self.DrawingClass.PDF.value, command=self.onChangeDrawingClass).grid(row=0, column=1, sticky=tk.W)
+        tk.Radiobutton(exportFormatBox, text='DWG', variable=self.drawingClassValue, value=self.DrawingClass.DWG.value, command=self.onChangeDrawingClass).grid(row=0, column=2, sticky=tk.W)
 
-        tk.Label(parent, text=_('图像分辨率（仅对PDF导出）：')).grid(row=13, column=0, sticky=tk.E)
-        self.imageResolutionCombox = ttk.Combobox(parent, values=list(NxModules.ImageResolution.keys()), state='readonly')
-        self.imageResolutionCombox.grid(row=13, column=1, columnspan=2, sticky=tk.W)
-        self.imageResolutionCombox.set(list(NxModules.ImageResolution.keys())[0])
+        # PDF 导出设置
+        self.pdfSettingBox = tk.LabelFrame(parent, text=_('PDF 导出设置'), padx=10, pady=10)
+        self.pdfSettingBox.grid(row=13, column=0, columnspan=6, sticky=tk.NSEW)
+        for c in range(6):
+            self.pdfSettingBox.columnconfigure(c, weight=1)
+
+        # 打印属性 - 颜色
+        tk.Label(self.pdfSettingBox, text=_('颜色：')).grid(row=0, column=0, sticky=tk.E)
+        self.colorCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.Color.keys()), state='readonly')
+        self.colorCombox.grid(row=0, column=1, sticky=tk.W)
+        self.colorCombox.set(list(NxModules.Color.keys())[0]) # 按显示
+
+        # 打印属性 - 宽度
+        tk.Label(self.pdfSettingBox, text=_('宽度：')).grid(row=0, column=2, sticky=tk.E)
+        self.widthCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.Width.keys()), state='readonly')
+        self.widthCombox.grid(row=0, column=3, sticky=tk.W)
+        self.widthCombox.set(list(NxModules.Width.keys())[0]) # 标准宽度
+
+        # 打印属性 - 大小
+        tk.Label(self.pdfSettingBox, text=_('大小：')).grid(row=0, column=4, sticky=tk.E)
+        self.sizeOptionCombox = ttk.Combobox(self.pdfSettingBox, values=list(NxModules.SizeOption.keys()), state='readonly')
+        self.sizeOptionCombox.grid(row=0, column=5, sticky=tk.W)
+        self.sizeOptionCombox.bind("<<ComboboxSelected>>", self.onChangeSizeOption)
+        self.sizeOptionCombox.set(list(NxModules.SizeOption.keys())[1]) # 比例因子
+
+        # 打印属性 - 比例因子
+        self.scaleFactorFrame = tk.LabelFrame(self.pdfSettingBox, text=_('比例因子'))
+        self.scaleFactorFrame.grid(row=1, column=0, columnspan=6, sticky=tk.NSEW)
+        for c in range(6):
+            self.scaleFactorFrame.columnconfigure(c, weight=1)
+        tk.Label(self.scaleFactorFrame, text=_('比例因子：')).grid(row=0, column=4, sticky=tk.E)
+        self.scaleFactorValue = tk.DoubleVar(parent, value='3.0')
+        tk.Entry(self.scaleFactorFrame, textvariable=self.scaleFactorValue, bd=3).grid(row=0, column=5, sticky=tk.W)
+
+        # 打印属性 - 尺寸
+        self.dimensionFrame = tk.LabelFrame(self.pdfSettingBox, text=_('尺寸'))
+        self.dimensionFrame.grid(row=2, column=0, columnspan=6, sticky=tk.NSEW)
+        for c in range(6):
+            self.dimensionFrame.columnconfigure(c, weight=1)
+        tk.Label(self.dimensionFrame, text=_('单位：')).grid(row=0, column=0, sticky=tk.E)
+        self.unitsOptionCombox = ttk.Combobox(self.dimensionFrame, values=list(NxModules.UnitsOption.keys()), state='readonly')
+        self.unitsOptionCombox.grid(row=0, column=1, sticky=tk.W)
+        self.unitsOptionCombox.bind("<<ComboboxSelected>>", self.onChangeDimensionUnits)
+        self.lastDimensionUnits = list(NxModules.UnitsOption.keys())[1] # 英寸
+        self.unitsOptionCombox.set(self.lastDimensionUnits)
+
+        tk.Label(self.dimensionFrame, text=_('X尺寸：')).grid(row=0, column=2, sticky=tk.E)
+        self.dimensionXValue = tk.DoubleVar(parent, value='8.5')
+        tk.Entry(self.dimensionFrame, textvariable=self.dimensionXValue, bd=3).grid(row=0, column=3, sticky=tk.W)
+
+        tk.Label(self.dimensionFrame, text=_('Y尺寸：')).grid(row=0, column=4, sticky=tk.E)
+        self.dimensionYValue = tk.DoubleVar(parent, value='11.0')
+        tk.Entry(self.dimensionFrame, textvariable=self.dimensionYValue, bd=3).grid(row=0, column=5, sticky=tk.W)
+
+        # 设置
+        self.settingBox = tk.LabelFrame(self.pdfSettingBox, text=_('设置'), padx=10, pady=10)
+        self.settingBox.grid(row=3, column=0, columnspan=6, sticky=tk.NSEW)
+        for c in range(6):
+            self.settingBox.columnconfigure(c, weight=1)
+
+        tk.Label(self.settingBox, text=_('输出文本：')).grid(row=0, column=0, sticky=tk.E)
+        self.outputTextOptionCombox = ttk.Combobox(self.settingBox, values=list(NxModules.OutputTextOption.keys()), state='readonly')
+        self.outputTextOptionCombox.grid(row=0, column=1, sticky=tk.W)
+        self.outputTextOptionCombox.set(list(NxModules.OutputTextOption.keys())[1]) # 多段线
+
+        self.addWatermarkBoolValue = tk.BooleanVar(parent, value=False)
+        tk.Checkbutton(self.settingBox, text=_('添加水印'), variable=self.addWatermarkBoolValue, command=self.onChangeAddWatermark).grid(row=0, column=2, sticky=tk.E)
+        self.watermarkTextValue = tk.StringVar(parent, value='')
+        self.watermarkEntry = tk.Entry(self.settingBox, textvariable=self.watermarkTextValue, bd=3)
+        self.watermarkEntry.grid(row=0, column=3, columnspan=3, sticky=tk.NSEW)
+
+        # 设置 - 图纸页
+        self.paperSettingBox = tk.LabelFrame(self.settingBox, text=_('图纸页'), padx=10, pady=10)
+        self.paperSettingBox.grid(row=1, column=0, columnspan=6, sticky=tk.NSEW)
+        for c in range(6):
+            self.paperSettingBox.columnconfigure(c, weight=1)
+
+        self.rasterImagesBoolValue = tk.BooleanVar(parent, value=True)
+        tk.Checkbutton(self.paperSettingBox, text=_('在图纸上导出光栅图像'), variable=self.rasterImagesBoolValue, command=self.onChangeRaster).grid(row=0, column=0, sticky=tk.W)
+
+        self.shadedGeometryBoolValue = tk.BooleanVar(parent, value=False)
+        self.shadedGeometryCheckBtn = tk.Checkbutton(self.paperSettingBox, text=_('将着色的几何体导出为线框'), variable=self.shadedGeometryBoolValue)
+        self.shadedGeometryCheckBtn.grid(row=0, column=1, sticky=tk.W)
+
+        self.customSymbolsInForegroundBoolValue = tk.BooleanVar(parent, value=False)
+        tk.Checkbutton(self.paperSettingBox, text=_('在前景中导出定制符号'), variable=self.customSymbolsInForegroundBoolValue).grid(row=0, column=2, sticky=tk.W)
+
+        tk.Label(self.paperSettingBox, text=_('图像分辨率：')).grid(row=0, column=3, sticky=tk.E)
+        self.imageResolutionCombox = ttk.Combobox(self.paperSettingBox, values=list(NxModules.ImageResolution.keys()), state='readonly')
+        self.imageResolutionCombox.grid(row=0, column=4, sticky=tk.W)
+        self.imageResolutionCombox.set(list(NxModules.ImageResolution.keys())[0]) # 高
 
         self.exportButton = tk.Button(parent, text=_('导出'), command=self.onExport, bd=3)
         self.exportButton.grid(row=14, column=0, columnspan=3, sticky=tk.NSEW)
+
+        # 初始化选项状态
+        self.onChangeSizeOption()
+        self.onChangeAddWatermark()
+
+    def onChangeRaster(self):
+        """切换光栅图像"""
+        if self.rasterImagesBoolValue.get():
+            self.shadedGeometryCheckBtn.config(state=tk.NORMAL)
+        else:
+            self.shadedGeometryBoolValue.set(True)
+            self.shadedGeometryCheckBtn.config(state=tk.DISABLED)
+
+    def onChangeAddWatermark(self):
+        """切换添加水印"""
+        if self.addWatermarkBoolValue.get():
+            self.watermarkEntry.config(state=tk.NORMAL)
+        else:
+            self.watermarkEntry.config(state=tk.DISABLED)
+
+    def onChangeDrawingClass(self):
+        """切换导出格式"""
+        if self.drawingClassValue.get() == self.DrawingClass.PDF.value:
+            self.pdfSettingBox.grid()
+        else:
+            self.pdfSettingBox.grid_remove()
+
+    def onChangeSizeOption(self, event=None):
+        """切换尺寸选项"""
+        sizeOptionValue = self.sizeOptionCombox.get()
+        if sizeOptionValue == list(NxModules.SizeOption.keys())[1]:
+            self.scaleFactorFrame.grid()
+            self.dimensionFrame.grid_remove()
+        elif sizeOptionValue == list(NxModules.SizeOption.keys())[2]:
+            self.scaleFactorFrame.grid_remove()
+            self.dimensionFrame.grid()
+        else:
+            self.scaleFactorFrame.grid_remove()
+            self.dimensionFrame.grid_remove()
+
+    def onChangeDimensionUnits(self, event=None):
+        """切换尺寸单位"""
+        try:
+            x = self.dimensionXValue.get()
+            y = self.dimensionYValue.get()
+        except tk.TclError:
+            messagebox.showerror(_('类型错误'), _('尺寸必须为数值类型'))
+            return
+
+        currUnitsValue = self.unitsOptionCombox.get()
+        if currUnitsValue != self.lastDimensionUnits:
+            precision = 4 # 保留小数点后四位
+            if currUnitsValue == list(NxModules.UnitsOption.keys())[0]: # 毫米
+                self.dimensionXValue.set(round(x * 25.4, precision))
+                self.dimensionYValue.set(round(y * 25.4, precision))
+            else:
+                self.dimensionXValue.set(round(x / 25.4, precision))
+                self.dimensionYValue.set(round(y / 25.4, precision))
+            self.lastDimensionUnits = currUnitsValue
 
     def createMergePdfTab(self, parent: tk.Frame):
         """
@@ -271,8 +421,46 @@ class Application(tk.Frame):
         self.msgText.see(tk.END)
         self.msgText.update_idletasks()
 
-    def getImageResolution(self):
-        return NxModules.ImageResolution[self.imageResolutionCombox.get()]
+    def extraPdfSetting(self) -> bool:
+        '''提取设置'''
+        try:
+            color_key = self.colorCombox.get()
+            width_key = self.widthCombox.get()
+            size_key = self.sizeOptionCombox.get()
+            units_key = self.unitsOptionCombox.get()
+            output_key = self.outputTextOptionCombox.get()
+            res_key = self.imageResolutionCombox.get()
+
+            if not all([color_key, width_key, size_key, units_key, output_key, res_key]):
+                self.writeMsg(_('存在未选择的 PDF 设置项！'), 'error')
+                return False
+
+            color = NxModules.Color[color_key]
+            width = NxModules.Width[width_key]
+            size = NxModules.SizeOption[size_key]
+
+            scale = self.scaleFactorValue.get()
+            units = NxModules.UnitsOption[units_key]
+            xDimension = self.dimensionXValue.get()
+            yDimension = self.dimensionYValue.get()
+
+            outputText = NxModules.OutputTextOption[output_key]
+            addWatermark = self.addWatermarkBoolValue.get()
+            watermark = self.watermarkTextValue.get()
+            rasterImages = self.rasterImagesBoolValue.get()
+            shadedGeometry = self.shadedGeometryBoolValue.get()
+            customSymbolsInForeground = self.customSymbolsInForegroundBoolValue.get()
+            imageResolution = NxModules.ImageResolution[res_key]
+
+            self.pdfSettingObj = NxModules.PdfSettings(
+                color, width, size, scale, units, xDimension, yDimension, 
+                outputText, addWatermark, watermark, rasterImages, 
+                shadedGeometry, customSymbolsInForeground, imageResolution
+            )
+            return True
+        except (tk.TclError, KeyError, Exception) as e:
+            self.writeMsg(_('提取 PDF 设置异常: {e}').format(e=str(e)), 'error')
+            return False
 
     def onExport(self):
         """"
@@ -283,19 +471,36 @@ class Application(tk.Frame):
         if exportFolder != '':
             os.makedirs(exportFolder, exist_ok=True)
         self.exportButton.config(state=tk.DISABLED)
-        match self.drawingClassValue.get():
-            case self.DrawingClass.PDF.value:
-                NxModules.foreachPrt(NxModules.exportPdf, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg, self.getImageResolution())
-            case self.DrawingClass.DWG.value:
-                NxModules.foreachPrt(NxModules.exportDwg, prtList, self.prefixNameValue.get(), self.suffixNameValue.get(), exportFolder, self.writeMsg)
-        # NX 2506 中执行时有异常，必须执行 update，否则按钮禁用状态下的点击也会留到本轮执行结束后继续触发
-        self.update()
-        self.exportButton.config(state=tk.NORMAL)
+        try:
+            match self.drawingClassValue.get():
+                case self.DrawingClass.PDF.value:
+                    if not self.extraPdfSetting():
+                        self.writeMsg(_('提取PDF设置失败，停止导出！'), 'error')
+                        return
+                    if self.pdfSettingObj is None:
+                        self.writeMsg(_('PDF设置对象未初始化，停止导出！'), 'error')
+                        return
+                    NxModules.foreachPrt(
+                        NxModules.exportPdf, prtList, 
+                        self.prefixNameValue.get(), self.suffixNameValue.get(), 
+                        exportFolder, self.writeMsg, self.pdfSettingObj
+                    )
+                case self.DrawingClass.DWG.value:
+                    NxModules.foreachPrt(
+                        NxModules.exportDwg, prtList, 
+                        self.prefixNameValue.get(), self.suffixNameValue.get(), 
+                        exportFolder, self.writeMsg
+                    )
+        except Exception as e:
+            self.writeMsg(_('导出过程发生未捕获异常: {e}').format(e=str(e)), 'error')
+        finally:
+            self.update()
+            self.exportButton.config(state=tk.NORMAL)
 
 def run():
     root = tk.Tk()
     width = 900
-    height = 600
+    height = 900
     screenwidth = root.winfo_screenwidth()
     screenheight = root.winfo_screenheight()
     root.geometry(f'{width}x{height}+{int((screenwidth - width) / 2)}+{int((screenheight - height) / 2)}')

@@ -22,6 +22,86 @@ class NxModules:
         _('草稿'): NXOpen.PrintPDFBuilder.ImageResolutionOption.Draft
     }
 
+    Color = {
+        _('按显示'): NXOpen.PrintPDFBuilder.Color.AsDisplayed,
+        _('部件颜色'): NXOpen.PrintPDFBuilder.Color.PartColors,
+        _('定制调色板'): NXOpen.PrintPDFBuilder.Color.CustomPalette,
+        _('白纸黑字'): NXOpen.PrintPDFBuilder.Color.BlackOnWhite,
+        _('原有颜色'): NXOpen.PrintPDFBuilder.Color.LegacyColors,
+        _('按宽度定色'): NXOpen.PrintPDFBuilder.Color.ColorsByWidth
+    }
+
+    Width = {
+        _('标准宽度'): NXOpen.PrintPDFBuilder.Width.StandardWidths,
+        _('单线宽度'): NXOpen.PrintPDFBuilder.Width.SingleWidth,
+        _('定制宽度'): NXOpen.PrintPDFBuilder.Width.CustomThreeWidths,
+        _('定制调色板'): NXOpen.PrintPDFBuilder.Width.CustomPalette
+    }
+
+    SizeOption = {
+        _('实际大小'): NXOpen.PrintPDFBuilder.SizeOption.FullScale,
+        _('比例因子'): NXOpen.PrintPDFBuilder.SizeOption.ScaleFactor,
+        _('尺寸'): NXOpen.PrintPDFBuilder.SizeOption.Dimension
+    }
+
+    OutputTextOption = {
+        _('文本'): NXOpen.PrintPDFBuilder.OutputTextOption.Text,
+        _('多段线'): NXOpen.PrintPDFBuilder.OutputTextOption.Polylines
+    }
+
+    UnitsOption = {
+        _('毫米'): NXOpen.PrintPDFBuilder.UnitsOption.Metric,
+        _('英寸'): NXOpen.PrintPDFBuilder.UnitsOption.English
+    }
+
+    class PdfSettings:
+        def __init__(self, color, width, size, scale: float, units, xDimension: float, yDimension: float, outputText, addWatermark: bool, watermark: str, rasterImages: bool, shadedGeometry: bool, customSymbolsInForeground: bool, imageResolution):
+            '''
+            PDF 导出设置参数
+
+            Args:
+                color: 颜色
+                width: 宽度
+                size: 大小
+                scale (float): 比例因子
+                units: 单位
+                xDimension (float): X 尺寸
+                yDimension (float): Y 尺寸
+                outputText: 输出文本
+                addWatermark (bool): 是否添加水印
+                watermark (str): 水印文本
+                rasterImages (bool): 在图纸中导出光栅图像
+                shadedGeometry (bool): 将着色的几何体导出为线框
+                customSymbolsInForeground (bool): 在前景中导出定制符号
+                imageResolution: 图像分辨率
+            '''
+            self.color = color
+            self.width = width
+            self.size = size
+            self.scale = scale
+            self.units = units
+            self.xDimension = xDimension
+            self.yDimension = yDimension
+            self.outputText = outputText
+            self.addWatermark = addWatermark
+            if addWatermark:
+                self.watermark = watermark
+            else:
+                self.watermark = ''
+            self.rasterImages = rasterImages
+            self.shadedGeometry = shadedGeometry
+            self.customSymbolsInForeground = customSymbolsInForeground
+            self.imageResolution = imageResolution
+
+        def get(self):
+            '''
+            读取 PDF 导出设置参数
+
+            Returns:
+                tuple: PDF 导出设置参数( color, width, size, scale, units, xDimension, yDimension, outputText, addWatermark, watermark, rasterImages, shadedGeometry, customSymbolsInForeground, imageResolution )
+            '''
+            return self.color, self.width, self.size, self.scale, self.units, self.xDimension, self.yDimension, self.outputText, self.addWatermark, self.watermark, self.rasterImages, self.shadedGeometry, self.customSymbolsInForeground, self.imageResolution
+
     @staticmethod
     def selectPrts() -> list[str]:
         """
@@ -95,7 +175,7 @@ class NxModules:
         return [workPrt.FullPath]
     
     @staticmethod
-    def foreachPrt(func, prtList: list[str], prefixName: str, suffixName: str, folder: str, writeMsg: Callable, imageResolution):
+    def foreachPrt(func, prtList: list[str], prefixName: str, suffixName: str, folder: str, writeMsg: Callable, pdfSettings: PdfSettings=None):
         """
         对每个 NX 文件执行指定函数
 
@@ -106,7 +186,7 @@ class NxModules:
             suffixName (str): 文件名后缀
             folder (str): 文件保存路径
             writeMsg (function): 用于输出消息的函数
-            imageResolution: 图片分辨率
+            pdfSettings (PdfSettings): PDF 导出设置
         """
         session = NXOpen.Session.GetSession()
         total = len(prtList)
@@ -141,8 +221,12 @@ class NxModules:
                     continue
 
             # 执行导出函数
-            if func(part, prefixName, suffixName, folder, writeMsg, imageResolution):
-                counter += 1
+            if pdfSettings is not None:
+                if func(part, prefixName, suffixName, folder, writeMsg, pdfSettings):
+                    counter += 1
+            else:
+                if func(part, prefixName, suffixName, folder, writeMsg):
+                    counter += 1
 
             if closePart:
                 part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.CloseModified, None)
@@ -161,7 +245,7 @@ class NxModules:
         writeMsg("=" * 50)
 
     @staticmethod
-    def exportPdf(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable, imageResolution):
+    def exportPdf(part: NXOpen.Part, prefixName: str, suffixName: str, folder: str, writeMsg: Callable, pdfSettings: PdfSettings):
         """
         导出 PDF
 
@@ -171,7 +255,7 @@ class NxModules:
             suffixName (str): 文件名后缀
             folder (str): 文件保存路径
             writeMsg (function): 用于输出消息的函数
-            imageResolution (int): 图像分辨率
+            pdfSettings (PdfSettings): PDF 导出设置
         
         Returns:
             bool: 导出是否成功
@@ -189,18 +273,26 @@ class NxModules:
             for sheet in sheets:
                 sheet.Open()
 
-            pdfbuilder.ImageResolution = imageResolution
-            pdfbuilder.OutputText = NXOpen.PrintPDFBuilder.OutputTextOption.Polylines # 设置输出文本为多段线
-            pdfbuilder.Size = NXOpen.PrintPDFBuilder.SizeOption.ScaleFactor # 大小按比例因子
-            pdfbuilder.Scale = 1.0 # 比例因子
-            pdfbuilder.RasterImages = True # 在图纸中导出光栅图像
-            pdfbuilder.Colors = NXOpen.PrintPDFBuilder.Color.AsDisplayed # 颜色按显示
-            pdfbuilder.Widths = NXOpen.PrintPDFBuilder.Width.StandardWidths # 线宽按标准线宽
-            pdfbuilder.AddWatermark = False # 不添加水印
-            pdfbuilder.Watermark = '' # 水印内容为空
-            pdfbuilder.Filename = filename # 设置输出文件名
-            pdfbuilder.SourceBuilder.SetSheets(sheets)
-            
+            pdfSettingsObj = pdfSettings.get()
+
+            pdfbuilder.Colors = pdfSettingsObj[0]
+            pdfbuilder.Widths = pdfSettingsObj[1]
+            pdfbuilder.Size = pdfSettingsObj[2]
+            pdfbuilder.Scale = pdfSettingsObj[3]
+            pdfbuilder.Units = pdfSettingsObj[4]
+            pdfbuilder.XDimension = pdfSettingsObj[5]
+            pdfbuilder.YDimension = pdfSettingsObj[6]
+            pdfbuilder.OutputText = pdfSettingsObj[7]
+            pdfbuilder.AddWatermark = pdfSettingsObj[8]
+            pdfbuilder.Watermark = pdfSettingsObj[9]
+            pdfbuilder.RasterImages = pdfSettingsObj[10]
+            pdfbuilder.ShadedGeometry = pdfSettingsObj[11]
+            pdfbuilder.CustomSymbolsInForeground = pdfSettingsObj[12]
+            pdfbuilder.ImageResolution = pdfSettingsObj[13]
+                                                        
+            pdfbuilder.Filename = filename # 输出文件名
+            pdfbuilder.SourceBuilder.SetSheets(sheets) # 图纸
+
             pdfbuilder.Commit()
             pdfbuilder.Destroy()
 
