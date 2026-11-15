@@ -1,0 +1,24 @@
+name: Auto Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*' # 匹配所有以 v 开头的标签
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 赋予写入 Release 的权限
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 必须获取完整的 git 历史，否则无法正确生成 commit 列表
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true # 关键参数：自动生成自上一个 Tag 以来的 Commit 列表作为描述
+          # draft: false # 是否是草稿（默认 false）
+          # prerelease: false # 是否是预发布版本（默认 false）
