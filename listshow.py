@@ -40,7 +40,7 @@ class ListShow(tk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
-        self.tree.bind('<Button-1>', self.toggleCheck)
+        self.tree.bind('<Button-3>', self.toggleCheck) # 右键切换选中状态
 
     def insertPrtList(self, prtList: list[str]):
         """
